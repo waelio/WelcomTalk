@@ -2,6 +2,11 @@ import SwiftUI
 import CoreNFC
 
 struct CreateSessionView: View {
+    private enum Field {
+        case sessionTitle
+        case userName
+    }
+
     @Environment(\.dismiss) var dismiss
     @StateObject private var nfcManager = NFCSessionManager()
     @State private var sessionTitle: String = ""
@@ -10,13 +15,21 @@ struct CreateSessionView: View {
     @State private var turnDuration: TimeInterval = 120
     @State private var createdSession: Session?
     @State private var showingSession = false
+    @FocusState private var focusedField: Field?
     
     var body: some View {
         NavigationView {
             Form {
                 Section("Conversation Setup") {
                     TextField("Topic (e.g., Family Discussion)", text: $sessionTitle)
+                        .textContentType(.none)
+                        .submitLabel(.next)
+                        .focused($focusedField, equals: .sessionTitle)
+
                     TextField("Your Name", text: $userName)
+                        .textContentType(.name)
+                        .submitLabel(.done)
+                        .focused($focusedField, equals: .userName)
                     
                     Picker("Number of Turns", selection: $maxTurns) {
                         ForEach([5, 10, 15, 20], id: \.self) { turns in
@@ -60,11 +73,13 @@ struct CreateSessionView: View {
                     .disabled(sessionTitle.isEmpty || userName.isEmpty)
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Start a Conversation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        dismissKeyboard()
                         dismiss()
                     }
                 }
@@ -85,6 +100,7 @@ struct CreateSessionView: View {
     }
     
     private func createSession() {
+        dismissKeyboard()
         let userId = UUID().uuidString
         let sessionCode = generateSessionCode()
         
@@ -108,6 +124,10 @@ struct CreateSessionView: View {
     private func generateSessionCode() -> String {
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return String((0..<6).map { _ in letters.randomElement()! })
+    }
+
+    private func dismissKeyboard() {
+        focusedField = nil
     }
 }
 

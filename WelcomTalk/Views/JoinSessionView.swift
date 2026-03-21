@@ -2,6 +2,11 @@ import SwiftUI
 import CoreNFC
 
 struct JoinSessionView: View {
+    private enum Field {
+        case userName
+        case sessionCode
+    }
+
     @Environment(\.dismiss) var dismiss
     @StateObject private var nfcManager = NFCSessionManager()
     @State private var sessionCode: String = ""
@@ -12,23 +17,32 @@ struct JoinSessionView: View {
     @State private var showingSession = false
     @State private var showingQRScanner = false
     @State private var scannedCode: String?
+    @FocusState private var focusedField: Field?
     
     var body: some View {
         NavigationView {
             Form {
                 Section("Your Details") {
                     TextField("Your Name", text: $userName)
+                        .textContentType(.name)
+                        .submitLabel(.next)
+                        .focused($focusedField, equals: .userName)
                     
                     HStack {
                         TextField("Session Code", text: $sessionCode)
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
+                            .textContentType(.none)
+                            .keyboardType(.asciiCapable)
+                            .submitLabel(.done)
+                            .focused($focusedField, equals: .sessionCode)
                             .onChange(of: sessionCode) { oldValue, newValue in
                                 sessionCode = newValue.uppercased()
                             }
                         
                         if NFCNDEFReaderSession.readingAvailable {
                             Button(action: {
+                                dismissKeyboard()
                                 nfcManager.startReading()
                             }) {
                                 Image(systemName: nfcManager.isReading ? "wave.3.right.circle.fill" : "wave.3.right.circle")
@@ -50,6 +64,7 @@ struct JoinSessionView: View {
                 
                 Section {
                     Button(action: {
+                        dismissKeyboard()
                         showingQRScanner = true
                     }) {
                         HStack {
@@ -70,6 +85,7 @@ struct JoinSessionView: View {
                 if NFCNDEFReaderSession.readingAvailable {
                     Section {
                         Button(action: {
+                            dismissKeyboard()
                             nfcManager.startReading()
                         }) {
                             HStack {
@@ -135,11 +151,13 @@ struct JoinSessionView: View {
                     .disabled(sessionCode.count != 6 || userName.isEmpty || isJoining)
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Join Conversation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        dismissKeyboard()
                         dismiss()
                     }
                 }
@@ -173,6 +191,7 @@ struct JoinSessionView: View {
     }
     
     private func joinSession() {
+        dismissKeyboard()
         isJoining = true
         errorMessage = nil
         
@@ -199,6 +218,10 @@ struct JoinSessionView: View {
             isJoining = false
             showingSession = true
         }
+    }
+
+    private func dismissKeyboard() {
+        focusedField = nil
     }
 }
 
