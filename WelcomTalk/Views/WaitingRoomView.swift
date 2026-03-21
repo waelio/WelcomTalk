@@ -113,8 +113,7 @@ struct WaitingRoomView: View {
             Spacer()
             
             Button("Cancel") {
-                sessionViewModel.endSession()
-                dismiss()
+                cancelWaitingSession()
             }
             .foregroundColor(.red)
             .padding(.bottom, 10)
@@ -129,6 +128,14 @@ struct WaitingRoomView: View {
         }
         .navigationTitle(sessionViewModel.session?.title ?? "Session")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Close") {
+                    cancelWaitingSession()
+                }
+                .foregroundColor(.red)
+            }
+        }
     }
     
     private func timeString(from timeInterval: TimeInterval) -> String {
@@ -146,6 +153,11 @@ struct WaitingRoomView: View {
         Don't have the app? Get it here:
         https://github.com/waelio/WelcomTalk
         """
+    }
+
+    private func cancelWaitingSession() {
+        sessionViewModel.endSession()
+        dismiss()
     }
 }
 
