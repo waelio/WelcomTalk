@@ -14,7 +14,6 @@ struct JoinSessionView: View {
     @State private var isJoining = false
     @State private var errorMessage: String?
     @State private var joinedSession: Session?
-    @State private var showingSession = false
     @State private var showingQRScanner = false
     @State private var scannedCode: String?
     @FocusState private var focusedField: Field?
@@ -181,16 +180,14 @@ struct JoinSessionView: View {
             .sheet(isPresented: $showingQRScanner) {
                 QRCodeScannerView(scannedCode: $scannedCode)
             }
-            .fullScreenCover(isPresented: $showingSession) {
-                if let session = joinedSession {
-                    NavigationStack {
-                        SessionView(sessionViewModel: SessionViewModel(
-                            session: session,
-                            userId: session.partyBId,
-                            userName: userName,
-                            isHost: false
-                        ))
-                    }
+            .fullScreenCover(item: $joinedSession) { session in
+                NavigationStack {
+                    SessionView(sessionViewModel: SessionViewModel(
+                        session: session,
+                        userId: session.partyBId,
+                        userName: userName,
+                        isHost: false
+                    ))
                 }
             }
         }
@@ -222,7 +219,6 @@ struct JoinSessionView: View {
             
             joinedSession = session
             isJoining = false
-            showingSession = true
         }
     }
 

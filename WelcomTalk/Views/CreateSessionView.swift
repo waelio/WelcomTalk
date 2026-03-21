@@ -14,7 +14,6 @@ struct CreateSessionView: View {
     @State private var maxTurns: Int = 10
     @State private var turnDuration: TimeInterval = 120
     @State private var createdSession: Session?
-    @State private var showingSession = false
     @FocusState private var focusedField: Field?
     
     var body: some View {
@@ -86,16 +85,14 @@ struct CreateSessionView: View {
                     }
                 }
             }
-            .fullScreenCover(isPresented: $showingSession) {
-                if let session = createdSession {
-                    NavigationStack {
-                        SessionView(sessionViewModel: SessionViewModel(
-                            session: session,
-                            userId: session.partyAId,
-                            userName: userName,
-                            isHost: true
-                        ))
-                    }
+            .fullScreenCover(item: $createdSession) { session in
+                NavigationStack {
+                    SessionView(sessionViewModel: SessionViewModel(
+                        session: session,
+                        userId: session.partyAId,
+                        userName: userName,
+                        isHost: true
+                    ))
                 }
             }
         }
@@ -120,7 +117,6 @@ struct CreateSessionView: View {
         )
         
         createdSession = session
-        showingSession = true
     }
     
     private func generateSessionCode() -> String {
