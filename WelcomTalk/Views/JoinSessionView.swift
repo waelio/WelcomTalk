@@ -79,7 +79,7 @@ struct JoinSessionView: View {
                 } header: {
                     Text("Quick Join")
                 } footer: {
-                    Text("Scan the QR code shown in the host's waiting room")
+                    Text("Scan the code shown on the first phone")
                         .font(.caption)
                 }
                 
@@ -110,15 +110,15 @@ struct JoinSessionView: View {
                 
                 Section("How to Join") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("• Receive the first code via AirDrop and paste it here")
+                        Text("• Receive the first phone's code via AirDrop and paste it here")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Text("• Or scan the first QR code from the other person's screen")
+                        Text("• Or scan the code from the first phone's screen")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Text("• Or enter the 6-character invite code they share")
+                        Text("• Or enter the 6-character code the first phone shares")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
@@ -128,7 +128,7 @@ struct JoinSessionView: View {
                                 .foregroundColor(.secondary)
                         }
 
-                        Text("• After you join, your phone will create a second code for the host to scan")
+                        Text("• After you join, this iPhone turns to a new barcode for the first phone to scan")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         

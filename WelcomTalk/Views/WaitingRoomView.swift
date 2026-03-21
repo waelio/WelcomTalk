@@ -15,7 +15,7 @@ struct WaitingRoomView: View {
             if sessionViewModel.isWaitingForGuestConfirmation {
                 guestConfirmationSection
             } else {
-                inviteCodeSection
+                myPhoneCodeSection
             }
             
             Spacer()
@@ -25,7 +25,7 @@ struct WaitingRoomView: View {
                 ProgressView()
                     .scaleEffect(1.5)
                 
-                Text(sessionViewModel.isWaitingForGuestConfirmation ? "Scan the second code to begin" : "Waiting for other person...")
+                Text(sessionViewModel.isWaitingForGuestConfirmation ? "Scan their new barcode to begin" : "Waiting for other person...")
                     .font(.headline)
                     .foregroundColor(.secondary)
                 
@@ -100,9 +100,9 @@ struct WaitingRoomView: View {
         return "\(minutes) min"
     }
 
-    private var inviteCodeSection: some View {
+    private var myPhoneCodeSection: some View {
         VStack(spacing: 15) {
-            Text("Invite Code")
+            Text("This iPhone's Code")
                 .font(.headline)
                 .foregroundColor(.secondary)
 
@@ -135,7 +135,7 @@ struct WaitingRoomView: View {
             ShareLink(item: sessionShareMessage) {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
-                    Text("Share first code")
+                    Text("Share this iPhone's code")
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
@@ -169,7 +169,12 @@ struct WaitingRoomView: View {
 
     private var guestConfirmationSection: some View {
         VStack(spacing: 16) {
-            Text("Second Code Needed")
+            myPhoneCodeSection
+
+            Divider()
+                .padding(.horizontal, 20)
+
+            Text("New Barcode From Other iPhone")
                 .font(.headline)
                 .foregroundColor(.secondary)
 
@@ -180,7 +185,7 @@ struct WaitingRoomView: View {
             Text("\(sessionViewModel.pendingParticipantName ?? "The other person") is ready.")
                 .font(.headline)
 
-            Text("Now scan their second code to confirm both phones are really in front of each other.")
+            Text("They already joined using your code. Their iPhone has now turned that into a new authentication barcode. Scan it to authenticate the pair and start the countdown on both phones.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -191,7 +196,7 @@ struct WaitingRoomView: View {
             }) {
                 HStack {
                     Image(systemName: "camera.viewfinder")
-                    Text("Scan second code")
+                    Text("Scan new authentication barcode")
                         .bold()
                 }
                 .padding(.horizontal, 20)
@@ -206,18 +211,18 @@ struct WaitingRoomView: View {
 
     private var waitingInstructions: String {
         if sessionViewModel.isWaitingForGuestConfirmation {
-            return "The other phone already joined with your first code. Scan their second code to start the conversation."
+            return "The other phone joined using your code and created a new barcode. Scan that new barcode to authenticate the session and start both countdowns."
         }
 
-        return "Share the first code by AirDrop, QR, or NFC. After they join, you'll scan their second code."
+        return "Share your barcode by AirDrop, QR, or NFC. When the other phone joins with it, that phone will turn to a new barcode for you to scan."
     }
 
     private var sessionShareMessage: String {
         let code = sessionViewModel.session?.sessionCode ?? "------"
         return """
-        Join my WelcomTalk conversation with the first code: \(code)
+        Join my WelcomTalk conversation with this code: \(code)
 
-        Enter this code in the WelcomTalk app first. After that, your phone will show a second code for me to scan.
+        Enter this code on the other iPhone. After it joins, that iPhone will create a new barcode for me to scan so both countdowns can start.
         """
     }
 

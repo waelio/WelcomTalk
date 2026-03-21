@@ -31,7 +31,7 @@ struct SessionView: View {
             ProgressView()
                 .scaleEffect(1.6)
 
-            Text("Show your code to the other phone")
+            Text("Your phone created a new barcode")
                 .font(.headline)
 
             if let confirmationCode = sessionViewModel.myConfirmationCode,
@@ -60,14 +60,14 @@ struct SessionView: View {
                     )
             }
 
-            Text("The host must scan this second code before the conversation begins.")
+            Text("You joined using the first phone's code. Now this iPhone shows a new authentication barcode. Keep it visible so the first phone can scan it, then the countdown starts on both phones.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
             if let code = sessionViewModel.session?.sessionCode {
-                Text("Joined with invite code: \(code)")
+                Text("You joined with the first phone's code: \(code)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }

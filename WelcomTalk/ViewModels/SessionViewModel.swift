@@ -338,29 +338,29 @@ class SessionViewModel: ObservableObject {
         pendingParticipantName = participantName ?? "Other person"
         expectedParticipantConfirmationCode = Self.normalizeCode(confirmationCode)
         errorMessage = expectedParticipantConfirmationCode == nil
-            ? "The other phone connected, but no confirmation code arrived. Ask them to rejoin."
+            ? "The other phone joined, but its new authentication barcode did not arrive. Ask them to rejoin."
             : nil
 
         addLogEntry(
             type: .userJoined,
-            message: "\(pendingParticipantName ?? "Other person") is ready. Scan their code to finish joining."
+            message: "\(pendingParticipantName ?? "Other person") joined with your code. Scan their new barcode to authenticate and start both countdowns."
         )
     }
 
     func confirmPendingParticipantJoin(with scannedCode: String) {
         guard let participantId = pendingParticipantId else {
-            errorMessage = "No second code is waiting to be scanned yet."
+            errorMessage = "No new authentication barcode is waiting to be scanned yet."
             return
         }
 
         guard let expectedCode = expectedParticipantConfirmationCode else {
-            errorMessage = "The guest code is missing. Ask the other person to leave and join again."
+            errorMessage = "The new authentication barcode is missing. Ask the other person to leave and join again."
             return
         }
 
         let normalizedScannedCode = Self.normalizeCode(scannedCode)
         guard normalizedScannedCode == expectedCode else {
-            errorMessage = "That code doesn't match the other person's join code."
+            errorMessage = "That barcode doesn't match the new authentication barcode from the other phone."
             return
         }
 

@@ -54,11 +54,15 @@ struct CreateSessionView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Text("• Share your first code with the other person to begin")
+                        Text("• This phone shares the first code")
                             .font(.caption)
                             .foregroundColor(.secondary)
 
-                        Text("• After they join, they will get a second code for you to scan")
+                        Text("• When the other phone joins, it turns to a new barcode for you to scan")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Text("• Scanning that new barcode starts the countdown on both phones")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
