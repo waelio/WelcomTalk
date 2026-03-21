@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct MessagingServerSettingsView: View {
@@ -11,7 +12,7 @@ struct MessagingServerSettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section("Messaging Server") {
+                Section {
                     TextField("ws://192.168.1.100:8080", text: $customServerURL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -21,11 +22,13 @@ struct MessagingServerSettingsView: View {
                     Text("Current app default: \(WebSocketService.defaultServerURL)")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                } header: {
+                    Text("Messaging Server")
                 } footer: {
                     Text("For two physical phones on the same Wi‑Fi, enter your Mac's WebSocket server address, for example ws://192.168.1.100:8080. Leave blank to use the built-in default.")
                 }
 
-                Section("Quick Actions") {
+                Section {
                     Button("Use Hosted Messaging Server") {
                         customServerURL = "wss://waelio-messaging.onrender.com"
                     }
@@ -38,12 +41,16 @@ struct MessagingServerSettingsView: View {
                         customServerURL = ""
                     }
                     .foregroundColor(.red)
+                } header: {
+                    Text("Quick Actions")
                 }
 
-                Section("Effective URL") {
+                Section {
                     Text(trimmedURL.isEmpty ? WebSocketService.defaultServerURL : trimmedURL)
                         .font(.callout.monospaced())
                         .textSelection(.enabled)
+                } header: {
+                    Text("Effective URL")
                 }
             }
             .navigationTitle("Messaging Settings")
