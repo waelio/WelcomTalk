@@ -54,7 +54,7 @@ struct SessionView: View {
         }
         .sheet(isPresented: $showingExportSheet) {
             if let url = exportedLogURL {
-                ShareSheet(items: [url])
+                ShareSheet(items: [url], isPresented: $showingExportSheet)
             }
         }
         .sheet(isPresented: $sessionViewModel.showRatingView) {

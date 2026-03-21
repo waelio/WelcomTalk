@@ -128,25 +128,29 @@ struct WaitingRoomView: View {
         }
         .navigationTitle(sessionViewModel.session?.title ?? "Session")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingShareSheet) {
-            if let code = sessionViewModel.session?.sessionCode {
-                ShareSheet(items: [
-                    """
-                    Join my WelcomTalk conversation with code: \(code)
-                    
-                    Enter this code in the WelcomTalk app to join our safe, turn-based conversation.
-                    
-                    Don't have the app? Get it here:
-                    https://github.com/waelio/WelcomTalk
-                    """
-                ])
-            }
-        }
+        .background(
+            ShareSheet(
+                items: [sessionShareMessage],
+                isPresented: $showingShareSheet
+            )
+        )
     }
     
     private func timeString(from timeInterval: TimeInterval) -> String {
         let minutes = Int(timeInterval) / 60
         return "\(minutes) min"
+    }
+
+    private var sessionShareMessage: String {
+        let code = sessionViewModel.session?.sessionCode ?? "------"
+        return """
+        Join my WelcomTalk conversation with code: \(code)
+
+        Enter this code in the WelcomTalk app to join our safe, turn-based conversation.
+
+        Don't have the app? Get it here:
+        https://github.com/waelio/WelcomTalk
+        """
     }
 }
 

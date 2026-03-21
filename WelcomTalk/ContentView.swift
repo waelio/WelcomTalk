@@ -111,12 +111,17 @@ struct ContentView: View {
                     SessionView(sessionViewModel: demoViewModel)
                 }
             }
-            .sheet(isPresented: $showingShareApp) {
-                ShareSheet(items: [
-                    "Try WelcomTalk - Safe Communication for Difficult Conversations\n\nWelcomTalk helps people have respectful conversations by enforcing turn-based speaking. One person talks at a time, preventing interruptions and promoting understanding.\n\nPerfect for: couples therapy, family discussions, workplace conflicts, or any conversation that needs structure.\n\nDownload: https://github.com/waelio/WelcomTalk"
-                ])
-            }
+            .background(
+                ShareSheet(
+                    items: [appShareMessage],
+                    isPresented: $showingShareApp
+                )
+            )
         }
+    }
+
+    private var appShareMessage: String {
+        "Try WelcomTalk - Safe Communication for Difficult Conversations\n\nWelcomTalk helps people have respectful conversations by enforcing turn-based speaking. One person talks at a time, preventing interruptions and promoting understanding.\n\nPerfect for: couples therapy, family discussions, workplace conflicts, or any conversation that needs structure.\n\nDownload: https://github.com/waelio/WelcomTalk"
     }
 }
 
