@@ -3,7 +3,7 @@ import Combine
 
 /// Manages real-time session synchronization using waelio-messaging
 class SessionMessagingService: ObservableObject {
-    @Published var participantJoined = false
+    @Published var joinAnnouncement: SessionSyncMessage?
     @Published var sessionState: SessionSyncMessage?
     
     private let webSocket: WebSocketService
@@ -15,6 +15,7 @@ class SessionMessagingService: ObservableObject {
         let sessionCode: String
         let userId: String
         let userName: String?
+        let isHost: Bool?
         let session: SessionData?
         let requestType: String?
         
@@ -41,12 +42,13 @@ class SessionMessagingService: ObservableObject {
     
     // MARK: - Session Actions
     
-    func announceSession(userId: String, userName: String) {
+    func announceSession(userId: String, userName: String, isHost: Bool) {
         let message = SessionSyncMessage(
             type: "join-session",
             sessionCode: sessionCode,
             userId: userId,
             userName: userName,
+            isHost: isHost,
             session: nil,
             requestType: nil
         )
@@ -73,6 +75,7 @@ class SessionMessagingService: ObservableObject {
             sessionCode: sessionCode,
             userId: userId,
             userName: nil,
+            isHost: nil,
             session: sessionData,
             requestType: nil
         )
@@ -86,6 +89,7 @@ class SessionMessagingService: ObservableObject {
             sessionCode: sessionCode,
             userId: userId,
             userName: nil,
+            isHost: nil,
             session: nil,
             requestType: requestType
         )
@@ -106,7 +110,7 @@ class SessionMessagingService: ObservableObject {
     
     private func handleIncomingMessage(_ message: WebSocketService.Message) {
         // Try to decode as session sync message
-        guard let data = message.content.data(using: .utf8),
+        guard let data = message.payload.data(using: .utf8),
               let syncMessage = try? JSONDecoder().decode(SessionSyncMessage.self, from: data) else {
             return
         }
@@ -116,7 +120,7 @@ class SessionMessagingService: ObservableObject {
         
         switch syncMessage.type {
         case "join-session":
-            participantJoined = true
+            joinAnnouncement = syncMessage
             
         case "session-state":
             sessionState = syncMessage

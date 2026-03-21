@@ -3,7 +3,10 @@ import Combine
 
 /// WebSocket service to connect to waelio-messaging backend
 class WebSocketService: NSObject, ObservableObject {
+    static let customServerURLKey = "welcomtalk.messaging.serverURL"
+
     @Published var isConnected = false
+    @Published var clientId: String?
     @Published var receivedMessages: [Message] = []
     @Published var onlineUsers: [String] = []
     @Published var error: String?
@@ -14,27 +17,39 @@ class WebSocketService: NSObject, ObservableObject {
     private let userId: String
     private let userName: String
     
-    struct Message: Codable, Identifiable {
+    struct Message: Identifiable {
         let id = UUID()
-        let type: String
         let from: String
-        let to: String?
-        let content: String
+        let payload: String
+        let isBroadcast: Bool
         let timestamp: Date
-        
-        enum CodingKeys: String, CodingKey {
-            case type, from, to, content, timestamp
-        }
     }
     
     struct OutgoingMessage: Codable {
         let type: String
         let to: String?
-        let content: String
+        let payload: String
+    }
+
+    static var defaultServerURL: String {
+        #if targetEnvironment(simulator)
+        return "ws://localhost:8080"
+        #else
+        return "wss://waelio-messaging.onrender.com"
+        #endif
+    }
+
+    static var configuredServerURL: String {
+        if let savedURL = UserDefaults.standard.string(forKey: customServerURLKey),
+           !savedURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return savedURL
+        }
+
+        return defaultServerURL
     }
     
-    init(serverURL: String = "ws://localhost:8080", userId: String, userName: String) {
-        self.serverURL = serverURL
+    init(serverURL: String? = nil, userId: String, userName: String) {
+        self.serverURL = serverURL ?? Self.configuredServerURL
         self.userId = userId
         self.userName = userName
         super.init()
@@ -53,13 +68,9 @@ class WebSocketService: NSObject, ObservableObject {
         
         webSocketTask = session?.webSocketTask(with: url)
         webSocketTask?.resume()
-        isConnected = true
         
         // Start receiving messages
         receiveMessage()
-        
-        // Send join message with user info
-        sendJoin()
     }
     
     func disconnect() {
@@ -69,18 +80,13 @@ class WebSocketService: NSObject, ObservableObject {
     
     // MARK: - Sending Messages
     
-    private func sendJoin() {
-        let joinMsg = OutgoingMessage(type: "join", to: nil, content: userName)
-        sendMessage(joinMsg)
-    }
-    
     func sendDirectMessage(to userId: String, content: String) {
-        let msg = OutgoingMessage(type: "direct", to: userId, content: content)
+        let msg = OutgoingMessage(type: "route", to: userId, payload: content)
         sendMessage(msg)
     }
     
     func sendBroadcast(content: String) {
-        let msg = OutgoingMessage(type: "broadcast", to: nil, content: content)
+        let msg = OutgoingMessage(type: "broadcast", to: nil, payload: content)
         sendMessage(msg)
     }
     
@@ -134,23 +140,49 @@ class WebSocketService: NSObject, ObservableObject {
     
     private func handleMessage(_ text: String) {
         guard let data = text.data(using: .utf8) else { return }
-        
-        // Try to parse as a message
-        if let message = try? JSONDecoder().decode(Message.self, from: data) {
-            DispatchQueue.main.async {
-                self.receivedMessages.append(message)
-            }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let type = json["type"] as? String else {
             return
         }
-        
-        // Try to parse as user list update
-        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let type = json["type"] as? String,
-           type == "users",
-           let users = json["users"] as? [String] {
+
+        switch type {
+        case "register-success":
+            DispatchQueue.main.async {
+                self.clientId = json["id"] as? String
+                self.isConnected = true
+                self.error = nil
+            }
+
+        case "user-list":
+            let users = json["users"] as? [String] ?? []
             DispatchQueue.main.async {
                 self.onlineUsers = users
             }
+
+        case "message":
+            guard let from = json["from"] as? String,
+                  let payload = json["payload"] as? String else {
+                return
+            }
+
+            let message = Message(
+                from: from,
+                payload: payload,
+                isBroadcast: json["isBroadcast"] as? Bool ?? false,
+                timestamp: Date()
+            )
+
+            DispatchQueue.main.async {
+                self.receivedMessages.append(message)
+            }
+
+        case "error":
+            DispatchQueue.main.async {
+                self.error = json["message"] as? String ?? "Unknown WebSocket error"
+            }
+
+        default:
+            break
         }
     }
     

@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showingCreateSession = false
     @State private var showingJoinSession = false
     @State private var showingDemoSession = false
+    @State private var showingMessagingSettings = false
     @StateObject private var demoViewModel = SessionViewModel()
     
     var body: some View {
@@ -96,6 +97,15 @@ struct ContentView: View {
             }
             .navigationTitle("WelcomTalk")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingMessagingSettings = true
+                    } label: {
+                        Image(systemName: "network")
+                    }
+                    .tint(.blue)
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     ShareLink(item: appShareMessage) {
                         Image(systemName: "square.and.arrow.up")
@@ -108,6 +118,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingJoinSession) {
                 JoinSessionView()
+            }
+            .sheet(isPresented: $showingMessagingSettings) {
+                MessagingServerSettingsView()
             }
             .fullScreenCover(isPresented: $showingDemoSession) {
                 NavigationStack {
