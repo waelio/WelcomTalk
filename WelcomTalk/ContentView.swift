@@ -97,6 +97,7 @@ struct ContentView: View {
                     ShareLink(item: appShareMessage) {
                         Image(systemName: "square.and.arrow.up")
                     }
+                    .tint(.blue)
                 }
             }
             .sheet(isPresented: $showingCreateSession) {
