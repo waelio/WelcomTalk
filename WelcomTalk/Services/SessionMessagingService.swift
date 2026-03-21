@@ -20,10 +20,15 @@ class SessionMessagingService: ObservableObject {
         let requestType: String?
         
         struct SessionData: Codable {
+            let title: String
             let currentTurn: String
             let currentTurnNumber: Int
+            let maxTurns: Int
+            let turnDuration: Double
             let timeRemaining: Double
             let status: String
+            let partyAId: String
+            let partyBId: String
         }
     }
     
@@ -58,16 +63,26 @@ class SessionMessagingService: ObservableObject {
     
     func broadcastSessionState(
         userId: String,
+        title: String,
         currentTurn: String,
         currentTurnNumber: Int,
+        maxTurns: Int,
+        turnDuration: Double,
         timeRemaining: Double,
-        status: String
+        status: String,
+        partyAId: String,
+        partyBId: String
     ) {
         let sessionData = SessionSyncMessage.SessionData(
+            title: title,
             currentTurn: currentTurn,
             currentTurnNumber: currentTurnNumber,
+            maxTurns: maxTurns,
+            turnDuration: turnDuration,
             timeRemaining: timeRemaining,
-            status: status
+            status: status,
+            partyAId: partyAId,
+            partyBId: partyBId
         )
         
         let message = SessionSyncMessage(

@@ -28,6 +28,10 @@ class SessionViewModel: ObservableObject {
         guard let session = session, let myParty = myParty else { return false }
         return session.currentTurn == myParty
     }
+
+    var isConnectingToHost: Bool {
+        !isHost && session?.status == .waiting
+    }
     
     var isWaitingForParticipant: Bool {
         guard let session = session else { return false }
@@ -44,7 +48,7 @@ class SessionViewModel: ObservableObject {
             self.myParty = session.partyAId == self.currentUserId ? .partyA : .partyB
             self.timeRemaining = session.turnDuration
             
-            if session.status == .waiting {
+            if isHost {
                 addLogEntry(type: .sessionStarted, message: "\(userName) created session")
             } else {
                 addLogEntry(type: .userJoined, message: "\(userName) joined session")
@@ -344,6 +348,11 @@ class SessionViewModel: ObservableObject {
         }
 
         session.currentTurnNumber = remoteSession.currentTurnNumber
+        session.title = remoteSession.title
+        session.maxTurns = remoteSession.maxTurns
+        session.turnDuration = remoteSession.turnDuration
+        session.partyAId = remoteSession.partyAId
+        session.partyBId = remoteSession.partyBId
 
         if session.partyBId.isEmpty && !isHost {
             session.partyBId = currentUserId
@@ -370,10 +379,15 @@ class SessionViewModel: ObservableObject {
 
         sessionMessaging?.broadcastSessionState(
             userId: currentUserId,
+            title: session.title,
             currentTurn: session.currentTurn.rawValue,
             currentTurnNumber: session.currentTurnNumber,
+            maxTurns: session.maxTurns,
+            turnDuration: session.turnDuration,
             timeRemaining: timeRemaining,
-            status: session.status.rawValue
+            status: session.status.rawValue,
+            partyAId: session.partyAId,
+            partyBId: session.partyBId
         )
     }
 

@@ -157,9 +157,6 @@ struct WaitingRoomView: View {
         Join my WelcomTalk conversation with code: \(code)
 
         Enter this code in the WelcomTalk app to join our safe, turn-based conversation.
-
-        Don't have the app? Get it here:
-        https://github.com/waelio/WelcomTalk
         """
     }
 

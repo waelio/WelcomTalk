@@ -11,15 +11,54 @@ struct SessionView: View {
         Group {
             if sessionViewModel.isWaitingForParticipant {
                 WaitingRoomView(sessionViewModel: sessionViewModel)
+            } else if sessionViewModel.isConnectingToHost {
+                connectingToHostView
             } else {
                 activeSessionView
             }
         }
         .onAppear {
-            if !sessionViewModel.isWaitingForParticipant {
+            if sessionViewModel.session?.status == .active {
                 sessionViewModel.startTimer()
             }
         }
+    }
+
+    private var connectingToHostView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            ProgressView()
+                .scaleEffect(1.6)
+
+            Text("Connecting to the other phone...")
+                .font(.headline)
+
+            if let code = sessionViewModel.session?.sessionCode {
+                Text("Session code: \(code)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            if let errorMessage = sessionViewModel.errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+
+            Button("Cancel") {
+                sessionViewModel.endSession()
+                dismiss()
+            }
+            .foregroundColor(.red)
+
+            Spacer()
+        }
+        .padding()
+        .navigationTitle(sessionViewModel.session?.title ?? "Connecting")
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     private var activeSessionView: some View {

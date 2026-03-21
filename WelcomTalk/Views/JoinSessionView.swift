@@ -205,16 +205,16 @@ struct JoinSessionView: View {
             let userId = UUID().uuidString
             
             let session = Session(
-                title: "Negotiation Session",
+                title: "Connecting...",
                 sessionCode: sessionCode,
-                status: .active,
+                status: .waiting,
                 currentTurn: .partyA,
                 currentTurnNumber: 1,
                 maxTurns: 10,
                 turnDuration: 120,
-                partyAId: "host-user-id",
+                partyAId: "pending-host",
                 partyBId: userId,
-                turnStartedAt: Date()
+                turnStartedAt: nil
             )
             
             joinedSession = session
