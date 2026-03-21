@@ -1,6 +1,6 @@
 //
 //  Persistence.swift
-//  Welcom
+//  WelcomTalk
 //
 //  Created by waelio on 07/03/2026.
 //
@@ -32,7 +32,7 @@ struct PersistenceController {
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "Welcom")
+        container = NSPersistentCloudKitContainer(name: "WelcomTalk")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }

@@ -1,10 +1,11 @@
 # WebSocket Integration Guide
 
-This guide explains how to enable real-time communication between devices using the [waelio-messaging](https://github.com/waelio/waelio-messaging.git)` backend.
+This guide explains how to enable real-time communication between devices using the [waelio-messaging](https://github.com/waelio/waelio-messaging.git) backend.
 
 ## Current State
 
 The app currently works in **standalone mode**:
+
 - ✅ QR code scanning to share session codes
 - ✅ Manual code entry
 - ✅ All UI and session logic complete
@@ -33,7 +34,7 @@ Example output: `inet 192.168.1.100`
 
 ### Step 3: Update Server URL
 
-In `Welcom/Services/WebSocketService.swift`, line 22:
+In `WelcomTalk/Services/WebSocketService.swift`, line 22:
 
 ```swift
 // For simulator (localhost)
@@ -45,7 +46,7 @@ init(serverURL: String = "ws://192.168.1.100:8080", userId: String, userName: St
 
 ### Step 4: Integrate in SessionViewModel
 
-In `Welcom/ViewModels/SessionViewModel.swift`, uncomment and implement:
+In `WelcomTalk/ViewModels/SessionViewModel.swift`, uncomment and implement:
 
 ```swift
 // Add properties (around line 22)
@@ -61,7 +62,7 @@ if let session = session {
     )
     webSocketService?.connect()
     sessionMessaging?.announceSession(userId: currentUserId, userName: userName)
-    
+
     // Listen for participant joining
     sessionMessaging?.$participantJoined
         .sink { [weak self] joined in

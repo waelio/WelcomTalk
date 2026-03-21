@@ -1,10 +1,10 @@
-# Welcom - Safe Communication for Difficult Conversations
+# WelcomTalk - Safe Communication for Difficult Conversations
 
-Welcom facilitates safe, friendly, and respectful communication between parties during difficult conversations. By enforcing turn-based speaking with automatic muting, both people can express themselves without interruption, yelling, or talking over each other.
+WelcomTalk facilitates safe, friendly, and respectful communication between parties during difficult conversations. By enforcing turn-based speaking with automatic muting, both people can express themselves without interruption, yelling, or talking over each other.
 
-## Why Welcom?
+## Why WelcomTalk?
 
-Difficult conversations often break down when people interrupt, raise voices, or talk over each other. Welcom creates a structured, safe space for communication by:
+Difficult conversations often break down when people interrupt, raise voices, or talk over each other. WelcomTalk creates a structured, safe space for communication by:
 
 - **Preventing Interruptions**: Only one person can speak at a time
 - **Equal Voice**: Both parties get fair, timed turns to express themselves
@@ -34,7 +34,7 @@ Perfect for: couples therapy, family discussions, workplace conflicts, mediation
 ## Architecture
 
 ```
-Welcom/
+WelcomTalk/
 ├── Models/
 │   ├── Session.swift           # Session data model
 │   ├── Note.swift              # Private notes model
@@ -59,7 +59,7 @@ Welcom/
 │   └── SessionMessagingService.swift # Session sync via WebSocket
 ├── Utils/
 │   └── ShareSheet.swift              # AirDrop & share menu
-└── WelcomApp.swift                  # App entry point
+└── WelcomTalkApp.swift              # App entry point
 ```
 
 ## Getting Started
@@ -82,42 +82,49 @@ Welcom/
    - Requires messaging server running
 
 **To enable WebSocket sync**:
+
 - Uncomment WebSocket integration in `SessionViewModel.swift`
 - Set server URL in `WebSocketService.swift`
 - Start messaging server: `cd /Users/waelio/Code/waelio-messaging && npm run dev`
 
 **Audio Integration** (Future):
+
 - Add WebRTC or Agora SDK
 - Implement in `SessionViewModel.swift`
 - Hook into existing mute/unmute logic
 
 ## Usage
+
 Creating and Joining Sessions
 
 **Option 1: Using AirDrop (Recommended)**
+
 1. **Host**: Tap "Start Conversation" → Tap "Share via AirDrop"
 2. **Participant**: Accept AirDrop → Code appears in message → Copy and paste into join screen
 3. Session automatically starts when both users are connected
 
 **Option 2: Using QR Code**
+
 1. **Host**: Tap "Start Conversation" → Session shows QR code in waiting room
 2. **Participant**: Tap "Join Conversation" → Tap "Scan QR Code" → Point camera at host's screen
 3. Session automatically starts when both users are connected
 
 **Option 3: Using NFC**
-1. **Host**: Tap "Start Conversation" → Fill details → Tap "Share via NFC"  
-2. **Participant**: Tap "Join Conversation" → Tap "Scan with NFC"  
-3. Hold phones back-to-back until code transfers  
+
+1. **Host**: Tap "Start Conversation" → Fill details → Tap "Share via NFC"
+2. **Participant**: Tap "Join Conversation" → Tap "Scan with NFC"
+3. Hold phones back-to-back until code transfers
 4. Session automatically starts when both users are connected
 
 **Option 4: Using Session Code**
+
 1. **Host**: Tap "Start Conversation" → Share the 6-character code
 2. **Participant**: Tap "Join Conversation" → Enter code manually
 3. Session starts when participant joins
 
 ### Inviting Others to Download the App
 
-Want to help someone get started with Welcom?
+Want to help someone get started with WelcomTalk?
 
 1. Tap the **share button** (↑) in the top-right corner of the home screen
 2. Choose how to share:
@@ -127,7 +134,8 @@ Want to help someone get started with Welcom?
    - **Copy** - Get the link to share anywhere
 
 The share message includes:
-- What Welcom does
+
+- What WelcomTalk does
 - Why it's useful for difficult conversations
 - GitHub download link
 
@@ -172,14 +180,16 @@ Perfect for therapists, mediators, or anyone who wants to help others communicat
 
 ## Real-Time Messaging Integration
 
-Welcom includes WebSocket client code to integrate with the `waelio-messaging` backend for real device-to-device communication.
+WelcomTalk includes WebSocket client code to integrate with the `waelio-messaging` backend for real device-to-device communication.
 
 **Architecture:**
+
 - `WebSocketService.swift` - Generic WebSocket client for waelio-messaging
 - `SessionMessagingService.swift` - Session-specific sync logic
 - Compatible with: https://github.com/waelio/waelio-messaging
 
 **To use:**
+
 1. Run messaging server: `cd /path/to/waelio-messaging && npm run dev`
 2. Update server URL in `WebSocketService.swift` if needed
 3. Enable WebSocket sync in `SessionViewModel` (currently commented out)
@@ -191,16 +201,19 @@ Welcom includes WebSocket client code to integrate with the `waelio-messaging` b
 ## NFC Requirements
 
 **Hardware:**
+
 - iPhone 7 or later (iPhone XR/XS for background NFC)
 - Both devices must support NFC
 
 **Testing:**
+
 - NFC only works on physical devices, not simulators
 - Devices must have iOS 13.0 or later
 - Hold devices back-to-back (where NFC antenna is located)
 - Wait for haptic feedback confirming successful read/write
 
 **Entitlements:**
+
 - Near Field Communication Tag Reading capability is enabled
 - NDEF format support is configured
   - Orange: 1-2 minutes remaining
@@ -222,13 +235,13 @@ Welcom includes WebSocket client code to integrate with the `waelio-messaging` b
 ### Building
 
 ```bash
-xcodebuild -project Welcom.xcodeproj -scheme Welcom -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -project WelcomTalk.xcodeproj -scheme WelcomTalk -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
 ### Running Tests
 
 ```bash
-xcodebuild test -project Welcom.xcodeproj -scheme Welcom -destination 'platform=iOS Simulator,name=iPhone 15'
+xcodebuild test -project WelcomTalk.xcodeproj -scheme WelcomTalk -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ## License

@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  Welcom
+//  WelcomTalk
 //
 //  Created by waelio on 07/03/2026.
 //
@@ -92,7 +92,7 @@ struct ContentView: View {
                 .foregroundColor(.secondary)
                 .padding(.bottom, 20)
             }
-            .navigationTitle("Welcom")
+            .navigationTitle("WelcomTalk")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingShareApp = true }) {
@@ -113,7 +113,7 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingShareApp) {
                 ShareSheet(items: [
-                    "Try Welcom - Safe Communication for Difficult Conversations\n\nWelcom helps people have respectful conversations by enforcing turn-based speaking. One person talks at a time, preventing interruptions and promoting understanding.\n\nPerfect for: couples therapy, family discussions, workplace conflicts, or any conversation that needs structure.\n\nDownload: https://github.com/waelio/welcom"
+                    "Try WelcomTalk - Safe Communication for Difficult Conversations\n\nWelcomTalk helps people have respectful conversations by enforcing turn-based speaking. One person talks at a time, preventing interruptions and promoting understanding.\n\nPerfect for: couples therapy, family discussions, workplace conflicts, or any conversation that needs structure.\n\nDownload: https://github.com/waelio/WelcomTalk"
                 ])
             }
         }
