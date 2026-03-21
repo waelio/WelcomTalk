@@ -18,7 +18,8 @@ struct SessionView: View {
             }
         }
         .onAppear {
-            if sessionViewModel.session?.status == .active {
+            if sessionViewModel.session?.status == .active,
+               sessionViewModel.drivesSessionClock {
                 sessionViewModel.startTimer()
             }
         }

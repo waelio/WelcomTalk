@@ -33,6 +33,10 @@ class SessionViewModel: ObservableObject {
         return session.currentTurn == myParty
     }
 
+    var drivesSessionClock: Bool {
+        isHost
+    }
+
     var isConnectingToHost: Bool {
         !isHost && session?.status == .waiting
     }
@@ -76,6 +80,12 @@ class SessionViewModel: ObservableObject {
     // MARK: - Session Management
     
     func startTimer() {
+        guard isHost else {
+            timer?.invalidate()
+            timer = nil
+            return
+        }
+
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -105,6 +115,7 @@ class SessionViewModel: ObservableObject {
     }
     
     private func handleTurnEnd() {
+        guard isHost else { return }
         guard var session = session else { return }
         
         addLogEntry(type: .turnEnded, message: "\(session.currentTurn.displayName) turn ended")
@@ -193,6 +204,7 @@ class SessionViewModel: ObservableObject {
         case .pauseSession:
             session.status = .paused
             timer?.invalidate()
+            timer = nil
             addLogEntry(type: .pause, message: "Session paused")
         case .resumeSession:
             session.status = .active
@@ -201,6 +213,7 @@ class SessionViewModel: ObservableObject {
         case .endSession:
             session.status = .completed
             timer?.invalidate()
+            timer = nil
             addLogEntry(type: .sessionEnded, message: "Session ended by mutual agreement")
             showRatingView = true
         }
@@ -420,12 +433,8 @@ class SessionViewModel: ObservableObject {
             myConfirmationCode = nil
         }
 
-        if session.status == .active && timer == nil {
-            startTimer()
-        } else if session.status != .active {
-            timer?.invalidate()
-            timer = nil
-        }
+        timer?.invalidate()
+        timer = nil
     }
 
     private func broadcastCurrentSessionState() {
