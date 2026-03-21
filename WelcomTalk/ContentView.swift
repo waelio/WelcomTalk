@@ -19,7 +19,8 @@ struct ContentView: View {
             VStack(spacing: 30) {
                 Image(systemName: "bubble.left.and.bubble.right")
                     .font(.system(size: 80))
-                    .foregroundColor(.blue)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.blue)
                 
                 Text("Safe Communication")
                     .font(.title)
@@ -86,9 +87,9 @@ struct ContentView: View {
                 
                 VStack(spacing: 8) {
                     HStack(spacing: 20) {
-                        FeatureLabel(icon: "timer", text: "Turn Timer")
-                        FeatureLabel(icon: "note.text", text: "Private Notes")
-                        FeatureLabel(icon: "list.bullet", text: "Session Log")
+                        FeatureLabel(icon: "timer", text: "Turn Timer", color: .blue)
+                        FeatureLabel(icon: "note.text", text: "Private Notes", color: .orange)
+                        FeatureLabel(icon: "list.bullet", text: "Session Log", color: .purple)
                     }
                 }
                 .font(.caption)
@@ -138,10 +139,13 @@ struct ContentView: View {
 struct FeatureLabel: View {
     let icon: String
     let text: String
+    let color: Color
     
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: icon)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(color)
             Text(text)
         }
     }

@@ -69,6 +69,7 @@ struct JoinSessionView: View {
                         HStack {
                             Spacer()
                             Image(systemName: "qrcode.viewfinder")
+                                .symbolRenderingMode(.hierarchical)
                             Text("Scan QR Code")
                                 .bold()
                             Spacer()
@@ -92,6 +93,7 @@ struct JoinSessionView: View {
                             HStack {
                                 Spacer()
                                 Image(systemName: "wave.3.right")
+                                    .symbolRenderingMode(.hierarchical)
                                 Text(nfcManager.isReading ? "Scanning..." : "Scan with NFC")
                                     .bold()
                                 Spacer()

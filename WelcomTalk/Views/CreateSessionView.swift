@@ -46,25 +46,11 @@ struct CreateSessionView: View {
                 
                 Section("How It Works") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("• Both people get equal, timed turns to speak")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("• Only one person can talk at a time - no interruptions")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("• This phone shares the first code")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                        Text("• When the other phone joins, it turns to a new barcode for you to scan")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                        Text("• Scanning that new barcode starts the countdown on both phones")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        InstructionRow(icon: "timer", color: .blue, text: "Both people get equal, timed turns to speak")
+                        InstructionRow(icon: "mic.slash", color: .red, text: "Only one person can talk at a time - no interruptions")
+                        InstructionRow(icon: "square.and.arrow.up", color: .blue, text: "This phone shares the first code")
+                        InstructionRow(icon: "qrcode.viewfinder", color: .green, text: "When the other phone joins, it turns to a new barcode for you to scan")
+                        InstructionRow(icon: "play.circle.fill", color: .orange, text: "Scanning that new barcode starts the countdown on both phones")
                     }
                 }
                 
@@ -129,6 +115,26 @@ struct CreateSessionView: View {
     
     private func dismissKeyboard() {
         focusedField = nil
+    }
+}
+
+private struct InstructionRow: View {
+    let icon: String
+    let color: Color
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(color)
+                .frame(width: 18)
+
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 

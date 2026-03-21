@@ -135,6 +135,7 @@ struct WaitingRoomView: View {
             ShareLink(item: sessionShareMessage) {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
+                        .symbolRenderingMode(.hierarchical)
                     Text("Share this iPhone's code")
                 }
                 .padding(.horizontal, 20)
@@ -153,6 +154,7 @@ struct WaitingRoomView: View {
                 }) {
                     HStack {
                         Image(systemName: nfcManager.isWriting ? "wave.3.right.circle.fill" : "wave.3.right")
+                            .symbolRenderingMode(.hierarchical)
                         Text(nfcManager.isWriting ? "Ready to tap..." : "Share via NFC")
                     }
                     .padding(.horizontal, 20)
@@ -180,7 +182,8 @@ struct WaitingRoomView: View {
 
             Image(systemName: "qrcode.viewfinder")
                 .font(.system(size: 64))
-                .foregroundColor(.green)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.green)
 
             Text("\(sessionViewModel.pendingParticipantName ?? "The other person") is ready.")
                 .font(.headline)
@@ -196,6 +199,7 @@ struct WaitingRoomView: View {
             }) {
                 HStack {
                     Image(systemName: "camera.viewfinder")
+                        .symbolRenderingMode(.hierarchical)
                     Text("Scan new authentication barcode")
                         .bold()
                 }

@@ -308,8 +308,13 @@ struct SessionView: View {
     private var notesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("Your Private Notes", systemImage: "note.text")
-                    .font(.headline)
+                HStack(spacing: 8) {
+                    Image(systemName: "note.text")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.orange)
+                    Text("Your Private Notes")
+                }
+                .font(.headline)
                 
                 Spacer()
                 
@@ -373,8 +378,13 @@ struct SessionView: View {
     // MARK: - Log Section
     private var logSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Session Log", systemImage: "list.bullet")
-                .font(.headline)
+            HStack(spacing: 8) {
+                Image(systemName: "list.bullet")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.purple)
+                Text("Session Log")
+            }
+            .font(.headline)
             
             if sessionViewModel.logEntries.isEmpty {
                 Text("No log entries yet")
@@ -503,6 +513,8 @@ struct SessionView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.blue)
                         .font(.title2)
                         .padding(.horizontal)
                 }
@@ -515,6 +527,8 @@ struct SessionView: View {
                     }
                 }) {
                     Image(systemName: "square.and.arrow.up")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.blue)
                         .font(.title2)
                         .padding(.horizontal)
                 }
