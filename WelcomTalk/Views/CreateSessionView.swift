@@ -70,6 +70,8 @@ struct CreateSessionView: View {
                             Spacer()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
                     .disabled(sessionTitle.isEmpty || userName.isEmpty)
                 }
             }

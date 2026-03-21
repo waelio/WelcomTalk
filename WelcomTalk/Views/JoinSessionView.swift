@@ -75,6 +75,8 @@ struct JoinSessionView: View {
                             Spacer()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
                 } header: {
                     Text("Quick Join")
                 } footer: {
@@ -96,6 +98,8 @@ struct JoinSessionView: View {
                                 Spacer()
                             }
                         }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.green)
                         .disabled(nfcManager.isReading)
                     } header: {
                         Text("NFC")
@@ -148,6 +152,8 @@ struct JoinSessionView: View {
                             Spacer()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
                     .disabled(sessionCode.count != 6 || userName.isEmpty || isJoining)
                 }
             }

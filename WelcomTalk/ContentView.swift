@@ -44,6 +44,7 @@ struct ContentView: View {
                         .foregroundColor(.white)
                         .cornerRadius(12)
                     }
+                    .buttonStyle(.plain)
                     
                     Button {
                         showingJoinSession = true
@@ -54,10 +55,11 @@ struct ContentView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.green)
+                        .background(Color.blue.opacity(0.9))
                         .foregroundColor(.white)
                         .cornerRadius(12)
                     }
+                    .buttonStyle(.plain)
                     
                     Divider()
                         .padding(.vertical, 10)
@@ -75,6 +77,7 @@ struct ContentView: View {
                         .foregroundColor(.primary)
                         .cornerRadius(12)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 40)
                 

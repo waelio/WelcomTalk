@@ -72,6 +72,7 @@ struct WaitingRoomView: View {
                         .foregroundColor(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                    .buttonStyle(.plain)
                     .disabled(nfcManager.isWriting)
                 }
             }
