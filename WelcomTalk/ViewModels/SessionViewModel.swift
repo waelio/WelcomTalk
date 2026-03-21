@@ -12,6 +12,8 @@ class SessionViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var showRatingView: Bool = false
+    @Published var myConfirmationCode: String?
+    @Published var pendingParticipantName: String?
     
     var myParty: Session.TurnParty?
     let currentUserId: String
@@ -23,6 +25,8 @@ class SessionViewModel: ObservableObject {
     // MARK: - WebSocket Integration (Optional)
     private var webSocketService: WebSocketService?
     private var sessionMessaging: SessionMessagingService?
+    private var pendingParticipantId: String?
+    private var expectedParticipantConfirmationCode: String?
     
     var isMyTurn: Bool {
         guard let session = session, let myParty = myParty else { return false }
@@ -31,6 +35,10 @@ class SessionViewModel: ObservableObject {
 
     var isConnectingToHost: Bool {
         !isHost && session?.status == .waiting
+    }
+
+    var isWaitingForGuestConfirmation: Bool {
+        isHost && session?.status == .waiting && pendingParticipantId != nil
     }
     
     var isWaitingForParticipant: Bool {
@@ -47,6 +55,10 @@ class SessionViewModel: ObservableObject {
             self.session = session
             self.myParty = session.partyAId == self.currentUserId ? .partyA : .partyB
             self.timeRemaining = session.turnDuration
+
+            if !isHost && session.status == .waiting {
+                self.myConfirmationCode = Self.generateCode()
+            }
             
             if isHost {
                 addLogEntry(type: .sessionStarted, message: "\(userName) created session")
@@ -83,8 +95,10 @@ class SessionViewModel: ObservableObject {
     func endSession() {
         guard var session = session else { return }
         timer?.invalidate()
+        timer = nil
         session.status = .completed
         self.session = session
+        clearPendingParticipantHandshake()
         addLogEntry(type: .sessionEnded, message: "Session ended by user")
         broadcastCurrentSessionState()
         showRatingView = true
@@ -272,7 +286,8 @@ class SessionViewModel: ObservableObject {
                 self.sessionMessaging?.announceSession(
                     userId: self.currentUserId,
                     userName: self.userName,
-                    isHost: self.isHost
+                    isHost: self.isHost,
+                    confirmationCode: self.myConfirmationCode
                 )
 
                 if !self.isHost {
@@ -290,9 +305,10 @@ class SessionViewModel: ObservableObject {
                 if self.isHost,
                    self.session?.status == .waiting,
                    announcement.isHost == false {
-                    self.handleParticipantJoined(
+                    self.handleParticipantJoinRequest(
                         participantId: announcement.userId,
-                        participantName: announcement.userName
+                        participantName: announcement.userName,
+                        confirmationCode: announcement.confirmationCode
                     )
                 }
             }
@@ -315,7 +331,39 @@ class SessionViewModel: ObservableObject {
         webSocket.connect()
     }
 
-    private func handleParticipantJoined(participantId: String, participantName: String?) {
+    private func handleParticipantJoinRequest(participantId: String, participantName: String?, confirmationCode: String?) {
+        guard session?.status == .waiting else { return }
+
+        pendingParticipantId = participantId
+        pendingParticipantName = participantName ?? "Other person"
+        expectedParticipantConfirmationCode = Self.normalizeCode(confirmationCode)
+        errorMessage = expectedParticipantConfirmationCode == nil
+            ? "The other phone connected, but no confirmation code arrived. Ask them to rejoin."
+            : nil
+
+        addLogEntry(
+            type: .userJoined,
+            message: "\(pendingParticipantName ?? "Other person") is ready. Scan their code to finish joining."
+        )
+    }
+
+    func confirmPendingParticipantJoin(with scannedCode: String) {
+        guard let participantId = pendingParticipantId else {
+            errorMessage = "No second code is waiting to be scanned yet."
+            return
+        }
+
+        guard let expectedCode = expectedParticipantConfirmationCode else {
+            errorMessage = "The guest code is missing. Ask the other person to leave and join again."
+            return
+        }
+
+        let normalizedScannedCode = Self.normalizeCode(scannedCode)
+        guard normalizedScannedCode == expectedCode else {
+            errorMessage = "That code doesn't match the other person's join code."
+            return
+        }
+
         guard var session = session, session.status == .waiting else { return }
 
         session.partyBId = participantId
@@ -323,8 +371,10 @@ class SessionViewModel: ObservableObject {
         session.turnStartedAt = Date()
         self.session = session
         self.timeRemaining = session.turnDuration
+        errorMessage = nil
 
-        let participantLabel = participantName ?? "Party B"
+        let participantLabel = pendingParticipantName ?? "Party B"
+        clearPendingParticipantHandshake()
         addLogEntry(type: .userJoined, message: "\(participantLabel) joined the session")
         addLogEntry(type: .turnStarted, message: "\(session.currentTurn.displayName) turn started")
 
@@ -365,6 +415,10 @@ class SessionViewModel: ObservableObject {
         self.session = session
         self.timeRemaining = remoteSession.timeRemaining
         updateMuteStatus()
+
+        if session.status == .active {
+            myConfirmationCode = nil
+        }
 
         if session.status == .active && timer == nil {
             startTimer()
@@ -408,5 +462,24 @@ class SessionViewModel: ObservableObject {
         startTimer()
         updateMuteStatus()
         broadcastCurrentSessionState()
+    }
+
+    private func clearPendingParticipantHandshake() {
+        pendingParticipantId = nil
+        pendingParticipantName = nil
+        expectedParticipantConfirmationCode = nil
+    }
+
+    static func generateCode(length: Int = 6) -> String {
+        let characters = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        return String((0..<length).compactMap { _ in characters.randomElement() })
+    }
+
+    private static func normalizeCode(_ code: String?) -> String? {
+        guard let code else { return nil }
+        let normalized = code
+            .uppercased()
+            .filter { $0.isLetter || $0.isNumber }
+        return normalized.isEmpty ? nil : normalized
     }
 }

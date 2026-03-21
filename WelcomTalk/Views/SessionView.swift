@@ -9,7 +9,7 @@ struct SessionView: View {
     
     var body: some View {
         Group {
-            if sessionViewModel.isWaitingForParticipant {
+            if sessionViewModel.isWaitingForParticipant || sessionViewModel.isWaitingForGuestConfirmation {
                 WaitingRoomView(sessionViewModel: sessionViewModel)
             } else if sessionViewModel.isConnectingToHost {
                 connectingToHostView
@@ -31,11 +31,43 @@ struct SessionView: View {
             ProgressView()
                 .scaleEffect(1.6)
 
-            Text("Connecting to the other phone...")
+            Text("Show your code to the other phone")
                 .font(.headline)
 
+            if let confirmationCode = sessionViewModel.myConfirmationCode,
+               let qrImage = QRCodeGenerator.generateQRCode(from: confirmationCode) {
+                Image(uiImage: qrImage)
+                    .interpolation(.none)
+                    .resizable()
+                    .frame(width: 220, height: 220)
+                    .padding()
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(radius: 5)
+
+                Text(confirmationCode)
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .tracking(4)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.green.opacity(0.12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.green, lineWidth: 2)
+                            )
+                    )
+            }
+
+            Text("The host must scan this second code before the conversation begins.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
             if let code = sessionViewModel.session?.sessionCode {
-                Text("Session code: \(code)")
+                Text("Joined with invite code: \(code)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }

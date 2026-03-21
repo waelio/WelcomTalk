@@ -54,7 +54,11 @@ struct CreateSessionView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Text("• Share the code with the other person to begin")
+                        Text("• Share your first code with the other person to begin")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Text("• After they join, they will get a second code for you to scan")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -101,7 +105,7 @@ struct CreateSessionView: View {
     private func createSession() {
         dismissKeyboard()
         let userId = UUID().uuidString
-        let sessionCode = generateSessionCode()
+        let sessionCode = SessionViewModel.generateCode()
         
         let session = Session(
             title: sessionTitle,
@@ -119,11 +123,6 @@ struct CreateSessionView: View {
         createdSession = session
     }
     
-    private func generateSessionCode() -> String {
-        let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<6).map { _ in letters.randomElement()! })
-    }
-
     private func dismissKeyboard() {
         focusedField = nil
     }

@@ -16,6 +16,7 @@ class SessionMessagingService: ObservableObject {
         let userId: String
         let userName: String?
         let isHost: Bool?
+        let confirmationCode: String?
         let session: SessionData?
         let requestType: String?
         
@@ -47,13 +48,14 @@ class SessionMessagingService: ObservableObject {
     
     // MARK: - Session Actions
     
-    func announceSession(userId: String, userName: String, isHost: Bool) {
+    func announceSession(userId: String, userName: String, isHost: Bool, confirmationCode: String?) {
         let message = SessionSyncMessage(
             type: "join-session",
             sessionCode: sessionCode,
             userId: userId,
             userName: userName,
             isHost: isHost,
+            confirmationCode: confirmationCode,
             session: nil,
             requestType: nil
         )
@@ -91,6 +93,7 @@ class SessionMessagingService: ObservableObject {
             userId: userId,
             userName: nil,
             isHost: nil,
+            confirmationCode: nil,
             session: sessionData,
             requestType: nil
         )
@@ -105,6 +108,7 @@ class SessionMessagingService: ObservableObject {
             userId: userId,
             userName: nil,
             isHost: nil,
+            confirmationCode: nil,
             session: nil,
             requestType: requestType
         )
