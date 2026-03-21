@@ -11,7 +11,6 @@ struct ContentView: View {
     @State private var showingCreateSession = false
     @State private var showingJoinSession = false
     @State private var showingDemoSession = false
-    @State private var showingShareApp = false
     @StateObject private var demoViewModel = SessionViewModel()
     
     var body: some View {
@@ -95,7 +94,7 @@ struct ContentView: View {
             .navigationTitle("WelcomTalk")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingShareApp = true }) {
+                    ShareLink(item: appShareMessage) {
                         Image(systemName: "square.and.arrow.up")
                     }
                 }
@@ -111,12 +110,6 @@ struct ContentView: View {
                     SessionView(sessionViewModel: demoViewModel)
                 }
             }
-            .background(
-                ShareSheet(
-                    items: [appShareMessage],
-                    isPresented: $showingShareApp
-                )
-            )
         }
     }
 

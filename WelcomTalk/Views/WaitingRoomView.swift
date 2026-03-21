@@ -5,7 +5,6 @@ struct WaitingRoomView: View {
     @ObservedObject var sessionViewModel: SessionViewModel
     @Environment(\.dismiss) var dismiss
     @StateObject private var nfcManager = NFCSessionManager()
-    @State private var showingShareSheet = false
     
     var body: some View {
         VStack(spacing: 30) {
@@ -44,7 +43,7 @@ struct WaitingRoomView: View {
                             )
                     )
                 
-                Button(action: { showingShareSheet = true }) {
+                ShareLink(item: sessionShareMessage) {
                     HStack {
                         Image(systemName: "square.and.arrow.up")
                         Text("Share via AirDrop")
@@ -128,12 +127,6 @@ struct WaitingRoomView: View {
         }
         .navigationTitle(sessionViewModel.session?.title ?? "Session")
         .navigationBarTitleDisplayMode(.inline)
-        .background(
-            ShareSheet(
-                items: [sessionShareMessage],
-                isPresented: $showingShareSheet
-            )
-        )
     }
     
     private func timeString(from timeInterval: TimeInterval) -> String {
