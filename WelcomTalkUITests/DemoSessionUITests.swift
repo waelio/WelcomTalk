@@ -7,7 +7,7 @@ final class DemoSessionUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app = XCUIApplication()
+        app = XCUIApplication(bundleIdentifier: "com.waelio.WelcomTalk")
         app.launchArguments = ["UI_TESTING"]
         app.launch()
         // Open demo session
