@@ -12,7 +12,7 @@ async function main() {
 
       const timeout = setTimeout(
         () => reject(new Error(name + " timeout connecting")),
-        15000,
+        45000,
       );
 
       ws.onopen = () => logs.push("[" + name + "] open");

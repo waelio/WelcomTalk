@@ -47,6 +47,7 @@ struct ContentView: View {
                         .cornerRadius(12)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Start Conversation")
                     
                     Button {
                         showingJoinSession = true
@@ -62,6 +63,7 @@ struct ContentView: View {
                         .cornerRadius(12)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Join Conversation")
                     
                     Divider()
                         .padding(.vertical, 10)
@@ -80,6 +82,7 @@ struct ContentView: View {
                         .cornerRadius(12)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Try Demo")
                 }
                 .padding(.horizontal, 40)
                 
@@ -104,6 +107,7 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "network")
                     }
+                    .accessibilityLabel("network")
                     .tint(.blue)
                 }
 

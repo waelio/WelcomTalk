@@ -6,13 +6,39 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		888EEF9186617F27ED915E8F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6D48E00D57C23A5B07C64D1 /* Foundation.framework */; };
+		B8487E557152BA1567F248F4 /* WelcomTalkUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D49657A1EDE050C8A6A735F /* WelcomTalkUITests.swift */; };
+		CB3EA88D6ADA36FDE5399B97 /* CreateSessionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */; };
+		DC149EA5777ABCF4A49216A1 /* DemoSessionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0961C025A448FB2D1A855E79 /* DemoSessionUITests.swift */; };
+		FE0F669B13D977F6D1B0AD56 /* JoinSessionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF09C87B3FD464BEDFF9E7A /* JoinSessionUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		58C053E3C8BB7D58B498ECE4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1F1DBC832F5C266800D6E7D9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1F1DBC8A2F5C266800D6E7D9;
+			remoteInfo = WelcomTalk;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0961C025A448FB2D1A855E79 /* DemoSessionUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DemoSessionUITests.swift; sourceTree = "<group>"; };
+		1DF09C87B3FD464BEDFF9E7A /* JoinSessionUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JoinSessionUITests.swift; sourceTree = "<group>"; };
 		1F1DBC8B2F5C266800D6E7D9 /* WelcomTalk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WelcomTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D49657A1EDE050C8A6A735F /* WelcomTalkUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WelcomTalkUITests.swift; sourceTree = "<group>"; };
+		9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CreateSessionUITests.swift; sourceTree = "<group>"; };
+		AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WelcomTalkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6D48E00D57C23A5B07C64D1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1F1DBC8D2F5C266800D6E7D9 /* WelcomTalk */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = WelcomTalk;
 			sourceTree = "<group>";
 		};
@@ -26,6 +52,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9E309753725376A4539E3EE6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				888EEF9186617F27ED915E8F /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -34,6 +68,8 @@
 			children = (
 				1F1DBC8D2F5C266800D6E7D9 /* WelcomTalk */,
 				1F1DBC8C2F5C266800D6E7D9 /* Products */,
+				334021AE14444FD80B0D2BC0 /* Frameworks */,
+				8CDD419EB27664648B7EC232 /* WelcomTalkUITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -41,8 +77,37 @@
 			isa = PBXGroup;
 			children = (
 				1F1DBC8B2F5C266800D6E7D9 /* WelcomTalk.app */,
+				AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2E51A559F3A6DE6DE086C709 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C6D48E00D57C23A5B07C64D1 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		334021AE14444FD80B0D2BC0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2E51A559F3A6DE6DE086C709 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8CDD419EB27664648B7EC232 /* WelcomTalkUITests */ = {
+			isa = PBXGroup;
+			children = (
+				5D49657A1EDE050C8A6A735F /* WelcomTalkUITests.swift */,
+				9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */,
+				1DF09C87B3FD464BEDFF9E7A /* JoinSessionUITests.swift */,
+				0961C025A448FB2D1A855E79 /* DemoSessionUITests.swift */,
+			);
+			name = WelcomTalkUITests;
+			path = WelcomTalkUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -64,11 +129,27 @@
 				1F1DBC8D2F5C266800D6E7D9 /* WelcomTalk */,
 			);
 			name = WelcomTalk;
-			packageProductDependencies = (
-			);
 			productName = WelcomTalk;
 			productReference = 1F1DBC8B2F5C266800D6E7D9 /* WelcomTalk.app */;
 			productType = "com.apple.product-type.application";
+		};
+		FB5E0149374B8EA9D98EDC98 /* WelcomTalkUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD4232CA086B0682286DE91C /* Build configuration list for PBXNativeTarget "WelcomTalkUITests" */;
+			buildPhases = (
+				12AF7FBE9B1A466233267ED7 /* Sources */,
+				9E309753725376A4539E3EE6 /* Frameworks */,
+				9BB4046E784AB5DE7CCCCD97 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				714798082CD53AE1A4A4315A /* PBXTargetDependency */,
+			);
+			name = WelcomTalkUITests;
+			productName = WelcomTalkUITests;
+			productReference = AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -82,6 +163,10 @@
 				TargetAttributes = {
 					1F1DBC8A2F5C266800D6E7D9 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					FB5E0149374B8EA9D98EDC98 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 1F1DBC8A2F5C266800D6E7D9;
 					};
 				};
 			};
@@ -100,6 +185,7 @@
 			projectRoot = "";
 			targets = (
 				1F1DBC8A2F5C266800D6E7D9 /* WelcomTalk */,
+				FB5E0149374B8EA9D98EDC98 /* WelcomTalkUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -112,9 +198,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9BB4046E784AB5DE7CCCCD97 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		12AF7FBE9B1A466233267ED7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B8487E557152BA1567F248F4 /* WelcomTalkUITests.swift in Sources */,
+				CB3EA88D6ADA36FDE5399B97 /* CreateSessionUITests.swift in Sources */,
+				FE0F669B13D977F6D1B0AD56 /* JoinSessionUITests.swift in Sources */,
+				DC149EA5777ABCF4A49216A1 /* DemoSessionUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1F1DBC872F5C266800D6E7D9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -123,6 +227,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		714798082CD53AE1A4A4315A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1F1DBC8A2F5C266800D6E7D9 /* WelcomTalk */;
+			targetProxy = 58C053E3C8BB7D58B498ECE4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1F1DBC9D2F5C266C00D6E7D9 /* Debug */ = {
@@ -318,6 +430,51 @@
 			};
 			name = Release;
 		};
+		7146EADE2EC2FACD30155793 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 5CY5WTPYKZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UITargetApplication = "com.waelio.WelcomTalk";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.waelio.WelcomTalkUITests;
+				PRODUCT_NAME = WelcomTalkUITests;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_APPLICATION_BUNDLE_IDENTIFIER = com.waelio.WelcomTalk;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C075E146838390531A4B34E9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 5CY5WTPYKZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UITargetApplication = "com.waelio.WelcomTalk";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.waelio.WelcomTalkUITests;
+				PRODUCT_NAME = WelcomTalkUITests;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_APPLICATION_BUNDLE_IDENTIFIER = com.waelio.WelcomTalk;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -335,6 +492,15 @@
 			buildConfigurations = (
 				1F1DBC9D2F5C266C00D6E7D9 /* Debug */,
 				1F1DBC9E2F5C266C00D6E7D9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD4232CA086B0682286DE91C /* Build configuration list for PBXNativeTarget "WelcomTalkUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7146EADE2EC2FACD30155793 /* Release */,
+				C075E146838390531A4B34E9 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
