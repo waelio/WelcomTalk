@@ -7,7 +7,7 @@ final class WelcomTalkUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app = XCUIApplication(bundleIdentifier: "com.waelio.WelcomTalk")
+        app = XCUIApplication()
         app.launchArguments = ["UI_TESTING"]
         app.launch()
     }

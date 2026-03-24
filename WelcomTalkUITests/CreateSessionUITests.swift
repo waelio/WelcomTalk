@@ -7,7 +7,7 @@ final class CreateSessionUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app = XCUIApplication(bundleIdentifier: "com.waelio.WelcomTalk")
+        app = XCUIApplication()
         app.launchArguments = ["UI_TESTING"]
         app.launch()
         // Open the Create Session sheet before each test
@@ -47,9 +47,11 @@ final class CreateSessionUITests: XCTestCase {
         XCTAssertTrue(topicField.waitForExistence(timeout: 3))
         topicField.tap()
         topicField.typeText("Family Budget Discussion")
-        // userName still empty – button must remain disabled
-        let startBtn = app.buttons.matching(NSPredicate(format: "label == 'Start Conversation' AND enabled == true")).firstMatch
-        XCTAssertFalse(startBtn.exists)
+        // userName still empty – the form submit button must remain disabled
+        let disabledStartBtn = app.buttons.matching(
+            NSPredicate(format: "label == 'Start Conversation' AND enabled == false")
+        ).firstMatch
+        XCTAssertTrue(disabledStartBtn.waitForExistence(timeout: 3), "Start button should be disabled when only title is filled")
     }
 
     func testFillBothFields_StartButtonEnabled() {

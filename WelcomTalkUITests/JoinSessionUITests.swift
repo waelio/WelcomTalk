@@ -7,7 +7,7 @@ final class JoinSessionUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app = XCUIApplication(bundleIdentifier: "com.waelio.WelcomTalk")
+        app = XCUIApplication()
         app.launchArguments = ["UI_TESTING"]
         app.launch()
         XCTAssertTrue(app.buttons["Join Conversation"].waitForExistence(timeout: 5))
@@ -27,10 +27,13 @@ final class JoinSessionUITests: XCTestCase {
     }
 
     func testJoinButtonDisabledWhenEmpty() {
-        let joinBtn = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS 'Join' AND enabled == true")
+        // The modal submit button should be disabled when fields are empty.
+        // Check using isEnabled directly (background buttons also have "Join" in their label
+        // but they may still be in the accessibility tree behind the sheet).
+        let disabledJoinBtn = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS 'Join Conversation' AND enabled == false")
         ).firstMatch
-        XCTAssertFalse(joinBtn.waitForExistence(timeout: 2))
+        XCTAssertTrue(disabledJoinBtn.waitForExistence(timeout: 3), "Join button should be disabled when fields are empty")
     }
 
     func testSessionCodeUppercased() {

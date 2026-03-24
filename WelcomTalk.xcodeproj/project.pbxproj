@@ -435,8 +435,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5CY5WTPYKZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UITargetApplication = "com.waelio.WelcomTalk";
+				INFOPLIST_FILE = WelcomTalkUITests/WelcomTalkUITests-Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -458,8 +457,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5CY5WTPYKZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UITargetApplication = "com.waelio.WelcomTalk";
+				INFOPLIST_FILE = WelcomTalkUITests/WelcomTalkUITests-Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
