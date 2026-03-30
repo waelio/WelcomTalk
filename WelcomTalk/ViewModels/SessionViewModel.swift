@@ -30,7 +30,7 @@ class SessionViewModel: ObservableObject {
 
     // MARK: - Peer-to-peer Sync
     private var multipeerService: MultipeerService?
-    private var pendingParticipantId: String?
+    @Published private var pendingParticipantId: String?
     
     var isMyTurn: Bool {
         guard let session = session, let myParty = myParty else { return false }
@@ -408,12 +408,17 @@ class SessionViewModel: ObservableObject {
             .filter { $0 }
             .sink { [weak self] _ in
                 guard let self else { return }
-                self.multipeerService?.announceSession(
-                    userId: self.currentUserId,
-                    userName: self.userName,
-                    isHost: self.isHost,
-                    confirmationCode: nil
-                )
+                // Short delay: MCSession marks the peer as .connected before the
+                // data channel is fully open. Sending immediately can silently drop.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    guard let self else { return }
+                    self.multipeerService?.announceSession(
+                        userId: self.currentUserId,
+                        userName: self.userName,
+                        isHost: self.isHost,
+                        confirmationCode: nil
+                    )
+                }
             }
             .store(in: &cancellables)
 

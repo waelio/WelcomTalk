@@ -31,7 +31,7 @@ class MultipeerService: NSObject, ObservableObject {
         // MCPeerID.displayName max is 63 chars; embed short userId suffix for uniqueness
         let displayName = String("\(userName)-\(userId.prefix(6))".prefix(63))
         self.myPeerID = MCPeerID(displayName: displayName)
-        self.mcSession = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
+        self.mcSession = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .optional)
         super.init()
         mcSession.delegate = self
     }
@@ -145,7 +145,7 @@ class MultipeerService: NSObject, ObservableObject {
 
     private func handle(data: Data) {
         guard let msg = try? JSONDecoder().decode(SessionMessagingService.SessionSyncMessage.self, from: data),
-              msg.sessionCode == sessionCode else { return }
+              msg.sessionCode.uppercased() == sessionCode.uppercased() else { return }
 
         DispatchQueue.main.async {
             switch msg.type {
@@ -193,7 +193,7 @@ extension MultipeerService: MCNearbyServiceAdvertiserDelegate {
 
 extension MultipeerService: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        guard info?["code"] == sessionCode else { return }
+        guard info?["code"]?.uppercased() == sessionCode.uppercased() else { return }
         browser.invitePeer(peerID, to: mcSession, withContext: nil, timeout: 30)
     }
 

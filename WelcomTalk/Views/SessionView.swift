@@ -27,6 +27,15 @@ struct SessionView: View {
                 sessionViewModel.startSpeechRecognitionIfMyTurn()
             }
         }
+        .onChange(of: sessionViewModel.session?.status) { _, newStatus in
+            guard newStatus == .active else { return }
+            // Fires when host approves and we transition from .waiting → .active
+            if sessionViewModel.drivesSessionClock {
+                sessionViewModel.startTimer()
+            } else {
+                sessionViewModel.startSpeechRecognitionIfMyTurn()
+            }
+        }
     }
 
     private var connectingToHostView: some View {
