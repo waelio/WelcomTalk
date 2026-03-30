@@ -28,9 +28,8 @@ class SessionViewModel: ObservableObject {
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
-    // MARK: - WebSocket Integration (Optional)
-    private var webSocketService: WebSocketService?
-    private var sessionMessaging: SessionMessagingService?
+    // MARK: - Peer-to-peer Sync
+    private var multipeerService: MultipeerService?
     private var pendingParticipantId: String?
     
     var isMyTurn: Bool {
@@ -71,7 +70,7 @@ class SessionViewModel: ObservableObject {
                 addLogEntry(type: .userJoined, message: "\(userName) joined session")
             }
 
-            enableWebSocketSync()
+            enableMultipeerSync()
         } else {
             // For demo: create a mock session
             createMockSession()
@@ -127,6 +126,8 @@ class SessionViewModel: ObservableObject {
         clearPendingParticipantHandshake()
         addLogEntry(type: .sessionEnded, message: "Session ended by user")
         broadcastCurrentSessionState()
+        multipeerService?.disconnect()
+        multipeerService = nil
         showRatingView = true
     }
     
@@ -395,39 +396,32 @@ class SessionViewModel: ObservableObject {
 
     // MARK: - Real-time Sync
 
-    private func enableWebSocketSync() {
-        guard let session = session, webSocketService == nil else { return }
+    private func enableMultipeerSync() {
+        guard let session = session, multipeerService == nil else { return }
 
-        let webSocket = WebSocketService(userId: currentUserId, userName: userName)
-        let messaging = SessionMessagingService(webSocket: webSocket, sessionCode: session.sessionCode)
+        let service = MultipeerService(userId: currentUserId, userName: userName, sessionCode: session.sessionCode)
+        multipeerService = service
 
-        webSocketService = webSocket
-        sessionMessaging = messaging
-
-        webSocket.$isConnected
+        // Announce ourselves as soon as a peer connects
+        service.$isConnected
             .removeDuplicates()
             .filter { $0 }
             .sink { [weak self] _ in
-                guard let self = self else { return }
-                self.sessionMessaging?.announceSession(
+                guard let self else { return }
+                self.multipeerService?.announceSession(
                     userId: self.currentUserId,
                     userName: self.userName,
                     isHost: self.isHost,
                     confirmationCode: nil
                 )
-
-                if !self.isHost {
-                    self.broadcastCurrentSessionState()
-                }
             }
             .store(in: &cancellables)
 
-        messaging.$joinAnnouncement
+        service.$joinAnnouncement
             .compactMap { $0 }
             .sink { [weak self] announcement in
-                guard let self = self else { return }
+                guard let self else { return }
                 guard announcement.userId != self.currentUserId else { return }
-
                 if self.isHost,
                    self.session?.status == .waiting,
                    announcement.isHost == false {
@@ -439,21 +433,18 @@ class SessionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        messaging.$sessionState
+        service.$sessionState
             .compactMap { $0 }
             .sink { [weak self] state in
                 self?.applyRemoteSessionState(state)
             }
             .store(in: &cancellables)
 
-        // WebSocket errors are handled internally via auto-reconnect;
-        // do not surface them as user-facing error messages.
-        webSocket.$error
-            .compactMap { $0 }
-            .sink { _ in }
-            .store(in: &cancellables)
-
-        webSocket.connect()
+        if isHost {
+            service.startHosting()
+        } else {
+            service.startBrowsing()
+        }
     }
 
     private func handleParticipantJoinRequest(participantId: String, participantName: String?) {
@@ -534,7 +525,7 @@ class SessionViewModel: ObservableObject {
     private func broadcastCurrentSessionState() {
         guard isHost, let session = session else { return }
 
-        sessionMessaging?.broadcastSessionState(
+        multipeerService?.broadcastSessionState(
             userId: currentUserId,
             title: session.title,
             currentTurn: session.currentTurn.rawValue,
