@@ -12,7 +12,6 @@ class SessionViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var showRatingView: Bool = false
-    @Published var myConfirmationCode: String?
     @Published var pendingParticipantName: String?
 
     // MARK: - Speech Recognition
@@ -21,19 +20,18 @@ class SessionViewModel: ObservableObject {
     @Published var liveTranscript: String = ""
     @Published var speechAuthorizationGranted: Bool = false
     private var speechCancellable: AnyCancellable?
-    
+
     var myParty: Session.TurnParty?
     let currentUserId: String
     private let userName: String
     private let isHost: Bool
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
-    
+
     // MARK: - WebSocket Integration (Optional)
     private var webSocketService: WebSocketService?
     private var sessionMessaging: SessionMessagingService?
     private var pendingParticipantId: String?
-    private var expectedParticipantConfirmationCode: String?
     
     var isMyTurn: Bool {
         guard let session = session, let myParty = myParty else { return false }
@@ -47,14 +45,14 @@ class SessionViewModel: ObservableObject {
     var isConnectingToHost: Bool {
         !isHost && session?.status == .waiting
     }
-
-    var isWaitingForGuestConfirmation: Bool {
-        isHost && session?.status == .waiting && pendingParticipantId != nil
-    }
     
     var isWaitingForParticipant: Bool {
         guard let session = session else { return false }
         return session.status == .waiting && session.partyBId.isEmpty
+    }
+
+    var isWaitingForApproval: Bool {
+        isHost && session?.status == .waiting && pendingParticipantId != nil
     }
     
     init(session: Session? = nil, userId: String? = nil, userName: String = "User", isHost: Bool = false) {
@@ -66,10 +64,6 @@ class SessionViewModel: ObservableObject {
             self.session = session
             self.myParty = session.partyAId == self.currentUserId ? .partyA : .partyB
             self.timeRemaining = session.turnDuration
-
-            if !isHost && session.status == .waiting {
-                self.myConfirmationCode = Self.generateCode()
-            }
 
             if isHost {
                 addLogEntry(type: .sessionStarted, message: "\(userName) created session")
@@ -419,7 +413,7 @@ class SessionViewModel: ObservableObject {
                     userId: self.currentUserId,
                     userName: self.userName,
                     isHost: self.isHost,
-                    confirmationCode: self.myConfirmationCode
+                    confirmationCode: nil
                 )
 
                 if !self.isHost {
@@ -439,8 +433,7 @@ class SessionViewModel: ObservableObject {
                    announcement.isHost == false {
                     self.handleParticipantJoinRequest(
                         participantId: announcement.userId,
-                        participantName: announcement.userName,
-                        confirmationCode: announcement.confirmationCode
+                        participantName: announcement.userName
                     )
                 }
             }
@@ -463,39 +456,21 @@ class SessionViewModel: ObservableObject {
         webSocket.connect()
     }
 
-    private func handleParticipantJoinRequest(participantId: String, participantName: String?, confirmationCode: String?) {
+    private func handleParticipantJoinRequest(participantId: String, participantName: String?) {
         guard session?.status == .waiting else { return }
 
         pendingParticipantId = participantId
-        pendingParticipantName = participantName ?? "Other person"
-        expectedParticipantConfirmationCode = Self.normalizeCode(confirmationCode)
-        errorMessage = expectedParticipantConfirmationCode == nil
-            ? "The other phone joined, but its new authentication barcode did not arrive. Ask them to rejoin."
-            : nil
+        pendingParticipantName = participantName ?? "Someone"
 
         addLogEntry(
             type: .userJoined,
-            message: "\(pendingParticipantName ?? "Other person") joined with your code. Scan their new barcode to authenticate and start both countdowns."
+            message: "\(pendingParticipantName ?? "Someone") wants to join"
         )
     }
 
-    func confirmPendingParticipantJoin(with scannedCode: String) {
-        guard let participantId = pendingParticipantId else {
-            errorMessage = "No new authentication barcode is waiting to be scanned yet."
-            return
-        }
-
-        guard let expectedCode = expectedParticipantConfirmationCode else {
-            errorMessage = "The new authentication barcode is missing. Ask the other person to leave and join again."
-            return
-        }
-
-        let normalizedScannedCode = Self.normalizeCode(scannedCode)
-        guard normalizedScannedCode == expectedCode else {
-            errorMessage = "That barcode doesn't match the new authentication barcode from the other phone."
-            return
-        }
-
+    /// Host taps "Let them in" — starts the session immediately on both devices.
+    func approveParticipantJoin() {
+        guard let participantId = pendingParticipantId else { return }
         guard var session = session, session.status == .waiting else { return }
 
         session.partyBId = participantId
@@ -549,7 +524,7 @@ class SessionViewModel: ObservableObject {
         updateMuteStatus()
 
         if session.status == .active {
-            myConfirmationCode = nil
+            myParty = myParty  // no-op, keep existing
         }
 
         timer?.invalidate()
@@ -595,19 +570,10 @@ class SessionViewModel: ObservableObject {
     private func clearPendingParticipantHandshake() {
         pendingParticipantId = nil
         pendingParticipantName = nil
-        expectedParticipantConfirmationCode = nil
     }
 
     static func generateCode(length: Int = 6) -> String {
         let characters = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
         return String((0..<length).compactMap { _ in characters.randomElement() })
-    }
-
-    private static func normalizeCode(_ code: String?) -> String? {
-        guard let code else { return nil }
-        let normalized = code
-            .uppercased()
-            .filter { $0.isLetter || $0.isNumber }
-        return normalized.isEmpty ? nil : normalized
     }
 }

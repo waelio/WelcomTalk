@@ -9,7 +9,7 @@ struct SessionView: View {
     
     var body: some View {
         Group {
-            if sessionViewModel.isWaitingForParticipant || sessionViewModel.isWaitingForGuestConfirmation {
+            if sessionViewModel.isWaitingForParticipant || sessionViewModel.isWaitingForApproval {
                 WaitingRoomView(sessionViewModel: sessionViewModel)
             } else if sessionViewModel.isConnectingToHost {
                 connectingToHostView
@@ -30,71 +30,54 @@ struct SessionView: View {
     }
 
     private var connectingToHostView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 32) {
             Spacer()
 
-            ProgressView()
-                .scaleEffect(1.6)
+            Image(systemName: "bubble.left.and.bubble.right.fill")
+                .font(.system(size: 72))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.blue)
 
-            Text("Your phone created a new barcode")
-                .font(.headline)
+            VStack(spacing: 8) {
+                Text("You're in!")
+                    .font(.title2)
+                    .bold()
 
-            if let confirmationCode = sessionViewModel.myConfirmationCode,
-               let qrImage = QRCodeGenerator.generateQRCode(from: confirmationCode) {
-                Image(uiImage: qrImage)
-                    .interpolation(.none)
-                    .resizable()
-                    .frame(width: 220, height: 220)
-                    .padding()
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .shadow(radius: 5)
-
-                Text(confirmationCode)
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .tracking(4)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.green.opacity(0.12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.green, lineWidth: 2)
-                            )
-                    )
-            }
-
-            Text("You joined using the first phone's code. Now this iPhone shows a new authentication barcode. Keep it visible so the first phone can scan it, then the countdown starts on both phones.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-
-            if let code = sessionViewModel.session?.sessionCode {
-                Text("You joined with the first phone's code: \(code)")
+                Text("Waiting for the host to let you in…")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+
+                if let code = sessionViewModel.session?.sessionCode {
+                    Text("Session code: \(code)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
+                }
             }
+
+            ProgressView()
+                .scaleEffect(1.4)
 
             if let errorMessage = sessionViewModel.errorMessage {
                 Text(errorMessage)
                     .font(.caption)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 32)
             }
+
+            Spacer()
 
             Button("Cancel") {
                 sessionViewModel.endSession()
                 dismiss()
             }
             .foregroundColor(.red)
-
-            Spacer()
+            .padding(.bottom, 24)
         }
         .padding()
-        .navigationTitle(sessionViewModel.session?.title ?? "Connecting")
+        .navigationTitle(sessionViewModel.session?.title ?? "Joining")
         .navigationBarTitleDisplayMode(.inline)
     }
     

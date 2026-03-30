@@ -5,35 +5,27 @@ struct WaitingRoomView: View {
     @ObservedObject var sessionViewModel: SessionViewModel
     @Environment(\.dismiss) var dismiss
     @StateObject private var nfcManager = NFCSessionManager()
-    @State private var showingQRScanner = false
-    @State private var scannedCode: String?
-    
+
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            if sessionViewModel.isWaitingForGuestConfirmation {
-                guestConfirmationSection
-            } else {
-                myPhoneCodeSection
-            }
-            
-            Spacer()
-            
-            // Waiting indicator
-            VStack(spacing: 15) {
-                ProgressView()
-                    .scaleEffect(1.5)
-                
-                Text(sessionViewModel.isWaitingForGuestConfirmation ? "Scan their new barcode to begin" : "Waiting for other person...")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                Text(waitingInstructions)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+        ScrollView {
+            VStack(spacing: 28) {
+                Spacer(minLength: 20)
+
+                if sessionViewModel.isWaitingForApproval {
+                    approvalSection
+                } else {
+                    shareCodeSection
+                }
+
+                // Session detail card
+                VStack(alignment: .leading, spacing: 12) {
+                    DetailRow(icon: "person.fill",         title: "Host",          value: sessionViewModel.session?.partyAName ?? "You")
+                    DetailRow(icon: "timer",               title: "Time per turn", value: timeString(from: sessionViewModel.session?.turnDuration ?? 120))
+                    DetailRow(icon: "arrow.left.arrow.right", title: "Total turns", value: "\(sessionViewModel.session?.maxTurns ?? 10)")
+                }
+                .padding(20)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.1)))
+                .padding(.horizontal, 20)
 
                 if let errorMessage = sessionViewModel.errorMessage {
                     Text(errorMessage)
@@ -42,67 +34,33 @@ struct WaitingRoomView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
                 }
+
+                // Demo helper
+                Button("Simulate Join (Demo)") {
+                    sessionViewModel.simulateParticipantJoin()
+                }
+                .font(.caption)
+                .foregroundColor(.blue)
+
+                Button("Cancel") { cancelWaitingSession() }
+                    .foregroundColor(.red)
+                    .padding(.bottom, 20)
             }
-            
-            Spacer()
-            
-            // Session details
-            VStack(alignment: .leading, spacing: 12) {
-                DetailRow(icon: "person.fill", title: "Started by", value: sessionViewModel.myParty?.displayName ?? "You")
-                DetailRow(icon: "timer", title: "Time per turn", value: timeString(from: sessionViewModel.session?.turnDuration ?? 120))
-                DetailRow(icon: "arrow.left.arrow.right", title: "Total turns", value: "\(sessionViewModel.session?.maxTurns ?? 10) each")
-            }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.1))
-            )
-            .padding(.horizontal, 20)
-            
-            Spacer()
-            
-            Button("Cancel") {
-                cancelWaitingSession()
-            }
-            .foregroundColor(.red)
-            .padding(.bottom, 10)
-            
-            // Demo: Simulate participant joining
-            Button("Simulate Join (Demo)") {
-                sessionViewModel.simulateParticipantJoin()
-            }
-            .font(.caption)
-            .foregroundColor(.blue)
-            .padding(.bottom, 20)
         }
         .navigationTitle(sessionViewModel.session?.title ?? "Session")
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: scannedCode) { oldValue, newValue in
-            guard let code = newValue else { return }
-            sessionViewModel.confirmPendingParticipantJoin(with: code)
-            scannedCode = nil
-        }
-        .sheet(isPresented: $showingQRScanner) {
-            QRCodeScannerView(scannedCode: $scannedCode)
-        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Close") {
-                    cancelWaitingSession()
-                }
-                .foregroundColor(.red)
+                Button("Close") { cancelWaitingSession() }.foregroundColor(.red)
             }
         }
     }
-    
-    private func timeString(from timeInterval: TimeInterval) -> String {
-        let minutes = Int(timeInterval) / 60
-        return "\(minutes) min"
-    }
 
-    private var myPhoneCodeSection: some View {
-        VStack(spacing: 15) {
-            Text("This iPhone's Code")
+    // MARK: - Share-code section (waiting for guest to scan/enter code)
+
+    private var shareCodeSection: some View {
+        VStack(spacing: 20) {
+            Text("Share this code to invite someone")
                 .font(.headline)
                 .foregroundColor(.secondary)
 
@@ -119,115 +77,108 @@ struct WaitingRoomView: View {
             }
 
             Text(sessionViewModel.session?.sessionCode ?? "")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .tracking(4)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .tracking(6)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.blue, lineWidth: 2)
-                        )
+                        .fill(Color.blue.opacity(0.08))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.blue, lineWidth: 2))
                 )
 
-            ShareLink(item: sessionShareMessage) {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                        .symbolRenderingMode(.hierarchical)
-                    Text("Share this iPhone's code")
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            .buttonStyle(.plain)
-
-            if NFCNDEFReaderSession.readingAvailable {
-                Button(action: {
-                    if let code = sessionViewModel.session?.sessionCode {
-                        nfcManager.startWriting(code: code)
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: nfcManager.isWriting ? "wave.3.right.circle.fill" : "wave.3.right")
-                            .symbolRenderingMode(.hierarchical)
-                        Text(nfcManager.isWriting ? "Ready to tap..." : "Share via NFC")
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            HStack(spacing: 12) {
+                ShareLink(item: sessionShareMessage) {
+                    Label("Share Code", systemImage: "square.and.arrow.up")
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
-                .disabled(nfcManager.isWriting)
+
+                if NFCNDEFReaderSession.readingAvailable {
+                    Button {
+                        if let code = sessionViewModel.session?.sessionCode {
+                            nfcManager.startWriting(code: code)
+                        }
+                    } label: {
+                        Label(nfcManager.isWriting ? "Ready…" : "NFC",
+                              systemImage: nfcManager.isWriting ? "wave.3.right.circle.fill" : "wave.3.right")
+                            .bold()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(nfcManager.isWriting)
+                }
             }
+            .padding(.horizontal, 20)
+
+            ProgressView()
+                .padding(.top, 4)
+            Text("Waiting for the other person to join…")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
     }
 
-    private var guestConfirmationSection: some View {
-        VStack(spacing: 16) {
-            myPhoneCodeSection
+    // MARK: - Approval section (guest knocked — host taps to let them in)
 
-            Divider()
-                .padding(.horizontal, 20)
-
-            Text("New Barcode From Other iPhone")
-                .font(.headline)
-                .foregroundColor(.secondary)
-
-            Image(systemName: "qrcode.viewfinder")
+    private var approvalSection: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "person.wave.2.fill")
                 .font(.system(size: 64))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.green)
 
-            Text("\(sessionViewModel.pendingParticipantName ?? "The other person") is ready.")
-                .font(.headline)
+            VStack(spacing: 6) {
+                Text("\(sessionViewModel.pendingParticipantName ?? "Someone") wants to join")
+                    .font(.title3)
+                    .bold()
+                    .multilineTextAlignment(.center)
 
-            Text("They already joined using your code. Their iPhone has now turned that into a new authentication barcode. Scan it to authenticate the pair and start the countdown on both phones.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                Text("Tap below to start the conversation.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
 
-            Button(action: {
-                showingQRScanner = true
-            }) {
+            Button {
+                sessionViewModel.approveParticipantJoin()
+            } label: {
                 HStack {
-                    Image(systemName: "camera.viewfinder")
-                        .symbolRenderingMode(.hierarchical)
-                    Text("Scan new authentication barcode")
+                    Image(systemName: "checkmark.circle.fill")
+                    Text("Let Them In")
                         .bold()
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .font(.title3)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
                 .background(Color.green)
                 .foregroundColor(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
+            .padding(.horizontal, 24)
         }
     }
 
-    private var waitingInstructions: String {
-        if sessionViewModel.isWaitingForGuestConfirmation {
-            return "The other phone joined using your code and created a new barcode. Scan that new barcode to authenticate the session and start both countdowns."
-        }
+    // MARK: - Helpers
 
-        return "Share your barcode by AirDrop, QR, or NFC. When the other phone joins with it, that phone will turn to a new barcode for you to scan."
+    private func timeString(from timeInterval: TimeInterval) -> String {
+        let minutes = Int(timeInterval) / 60
+        let seconds = Int(timeInterval) % 60
+        return seconds == 0 ? "\(minutes) min" : "\(minutes)m \(seconds)s"
     }
 
     private var sessionShareMessage: String {
         let code = sessionViewModel.session?.sessionCode ?? "------"
-        return """
-        Join my WelcomTalk conversation with this code: \(code)
-
-        Enter this code on the other iPhone. After it joins, that iPhone will create a new barcode for me to scan so both countdowns can start.
-        """
+        return "Join my WelcomTalk conversation!\n\nOpen the app, tap \"Join Conversation\" and enter this code: \(code)"
     }
 
     private func cancelWaitingSession() {
@@ -240,18 +191,15 @@ struct DetailRow: View {
     let icon: String
     let title: String
     let value: String
-    
+
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .foregroundColor(.blue)
                 .frame(width: 24)
-            
             Text(title)
                 .foregroundColor(.secondary)
-            
             Spacer()
-            
             Text(value)
                 .bold()
         }
@@ -262,20 +210,23 @@ struct DetailRow: View {
     NavigationStack {
         WaitingRoomView(sessionViewModel: SessionViewModel(
             session: Session(
-                title: "Demo Session",
+                title: "Weekend Plans",
                 sessionCode: "ABC123",
                 status: .waiting,
                 currentTurn: .partyA,
                 currentTurnNumber: 1,
-                maxTurns: 10,
-                turnDuration: 120,
+                maxTurns: 4,
+                turnDuration: 60,
                 partyAId: "user1",
                 partyBId: "",
+                partyAName: "Alex",
+                partyBName: "Sam",
                 turnStartedAt: nil
             ),
             userId: "user1",
-            userName: "Host User",
+            userName: "Alex",
             isHost: true
         ))
     }
 }
+
