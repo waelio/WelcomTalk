@@ -134,7 +134,7 @@ class MultipeerService: NSObject, ObservableObject {
         ))
     }
 
-    func sendCommand(_ command: String, userId: String) {
+    func sendCommand(_ command: String, userId: String, payload: String? = nil) {
         send(SessionMessagingService.SessionSyncMessage(
             type: "command",
             sessionCode: sessionCode,
@@ -143,7 +143,8 @@ class MultipeerService: NSObject, ObservableObject {
             isHost: nil,
             confirmationCode: nil,
             session: nil,
-            requestType: command
+            requestType: command,
+            payload: payload
         ))
     }
 

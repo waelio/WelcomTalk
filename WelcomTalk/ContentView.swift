@@ -19,8 +19,7 @@ struct ContentView: View {
             VStack(spacing: 30) {
                 Image(systemName: "bubble.left.and.bubble.right")
                     .font(.system(size: 80))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.blue)
+                    .foregroundColor(.blue)
                 
                 Text("Safe Communication")
                     .font(.title)

@@ -38,6 +38,10 @@
 	<string>Safe Talk uses your microphone to transcribe your speaking turn so both parties can review a written record of the conversation.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Safe Talk transcribes each participant's speaking turn to produce a complete session log of the conversation.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Safe Talk adds agreed meeting times to your calendar so both parties remember the next session.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Safe Talk adds agreed meeting times to your calendar so both parties remember the next session.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

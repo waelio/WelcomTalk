@@ -44,8 +44,7 @@ struct SessionView: View {
 
             Image(systemName: "bubble.left.and.bubble.right.fill")
                 .font(.system(size: 72))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.blue)
+                .foregroundColor(.blue)
 
             VStack(spacing: 8) {
                 Text("You're in!")
@@ -111,6 +110,12 @@ struct SessionView: View {
             }
             
             // Bottom Controls
+            if let proposal = sessionViewModel.receivedMeetingProposal {
+                meetingProposalBanner(proposal)
+            }
+            if sessionViewModel.lastConfirmedMeeting != nil {
+                meetingConfirmedBanner
+            }
             bottomControls
         }
         .navigationBarHidden(true)
@@ -128,6 +133,17 @@ struct SessionView: View {
                     session: session,
                     userId: sessionViewModel.currentUserId
                 )
+            }
+        }
+        .sheet(isPresented: $sessionViewModel.showScheduleMeeting) {
+            NavigationStack {
+                ScheduleMeetingView(
+                    sessionTitle: sessionViewModel.session?.title ?? "Session",
+                    myUserId: sessionViewModel.currentUserId,
+                    myName: sessionViewModel.displayName
+                ) { meeting in
+                    sessionViewModel.proposeMeeting(meeting)
+                }
             }
         }
     }
@@ -357,8 +373,7 @@ struct SessionView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: sessionViewModel.speechService.isRecognizing ? "waveform" : "waveform.slash")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(sessionViewModel.speechService.isRecognizing ? .green : .secondary)
+                    .foregroundColor(sessionViewModel.speechService.isRecognizing ? .green : .secondary)
                 Text(sessionViewModel.isMyTurn ? "Live Transcription" : "Waiting for your turn…")
                     .font(.headline)
                 Spacer()
@@ -399,8 +414,7 @@ struct SessionView: View {
             HStack {
                 HStack(spacing: 8) {
                     Image(systemName: "note.text")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(.orange)
+                        .foregroundColor(.orange)
                     Text("Your Private Notes")
                 }
                 .font(.headline)
@@ -469,8 +483,7 @@ struct SessionView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "list.bullet")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.purple)
+                    .foregroundColor(.purple)
                 Text("Session Log")
             }
             .font(.headline)
@@ -559,8 +572,7 @@ struct SessionView: View {
                         Image(systemName: sessionViewModel.session?.status == .paused
                               ? "play.circle.fill"
                               : "pause.circle.fill")
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(sessionViewModel.session?.status == .paused
+                            .foregroundColor(sessionViewModel.session?.status == .paused
                                              ? Color.green : Color.orange)
                             .font(.title2)
                             .padding(.horizontal)
@@ -598,7 +610,13 @@ struct SessionView: View {
                             reason: "Additional turn needed"
                         )
                     }
-                    
+
+                    Button {
+                        sessionViewModel.showScheduleMeeting = true
+                    } label: {
+                        Label("Schedule Next Session", systemImage: "calendar.badge.plus")
+                    }
+
                     Button("End Session", role: .destructive) {
                         sessionViewModel.requestModification(
                             type: .endSession,
@@ -607,8 +625,7 @@ struct SessionView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(.blue)
+                        .foregroundColor(.blue)
                         .font(.title2)
                         .padding(.horizontal)
                 }
@@ -621,8 +638,7 @@ struct SessionView: View {
                     }
                 }) {
                     Image(systemName: "square.and.arrow.up")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(.blue)
+                        .foregroundColor(.blue)
                         .font(.title2)
                         .padding(.horizontal)
                 }
@@ -662,5 +678,88 @@ struct SessionView: View {
         let minutes = Int(timeInterval) / 60
         let seconds = Int(timeInterval) % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    // MARK: - Meeting Proposal Banners
+
+    private func meetingProposalBanner(_ meeting: ScheduledMeeting) -> some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: "calendar.badge.plus")
+                    .font(.title3)
+                    .foregroundColor(.blue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(meeting.proposedByName) wants to schedule:")
+                        .font(.subheadline.bold())
+                    Text(meeting.title)
+                        .font(.subheadline)
+                    Text("\(meeting.formattedDateTime)  ·  \(meeting.formattedDuration)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal)
+
+            HStack(spacing: 12) {
+                Button {
+                    sessionViewModel.acceptMeetingProposal()
+                } label: {
+                    Label("Add to Calendar", systemImage: "calendar.badge.checkmark")
+                        .font(.subheadline.bold())
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
+
+                Button {
+                    sessionViewModel.dismissMeetingProposal()
+                } label: {
+                    Text("Dismiss")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal)
+        }
+        .padding(.vertical, 10)
+        .background(Color.blue.opacity(0.08))
+    }
+
+    private var meetingConfirmedBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "calendar.badge.checkmark")
+                .foregroundColor(.green)
+                .font(.title3)
+
+            if let meeting = sessionViewModel.lastConfirmedMeeting {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Meeting confirmed!")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.green)
+                    Text("\(meeting.title)  ·  \(meeting.formattedDateTime)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Spacer()
+
+            Button {
+                sessionViewModel.lastConfirmedMeeting = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(Color.green.opacity(0.08))
     }
 }

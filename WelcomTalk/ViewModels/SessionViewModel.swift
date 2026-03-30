@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import EventKit
 
 class SessionViewModel: ObservableObject {
     @Published var session: Session?
@@ -21,6 +22,11 @@ class SessionViewModel: ObservableObject {
     private let graceDuration: TimeInterval = 15
     private var graceTimer: Timer?
 
+    // MARK: - Scheduling
+    @Published var receivedMeetingProposal: ScheduledMeeting?
+    @Published var lastConfirmedMeeting: ScheduledMeeting?
+    @Published var showScheduleMeeting = false
+
     // MARK: - Speech Recognition
     let speechService = SpeechRecognitionService()
     /// Forwarded from speechService so views can bind directly to the view-model.
@@ -30,6 +36,7 @@ class SessionViewModel: ObservableObject {
 
     var myParty: Session.TurnParty?
     let currentUserId: String
+    var displayName: String { userName }
     private let userName: String
     private let isHost: Bool
     private var timer: Timer?
@@ -533,17 +540,26 @@ class SessionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Host handles instant commands sent by the guest (pause, resume, extend-grace).
+        // Both parties handle commands; clock-related ones are host-only.
         service.$commandReceived
             .compactMap { $0 }
             .filter { [weak self] cmd in cmd.userId != self?.currentUserId }
             .sink { [weak self] cmd in
-                guard let self, self.isHost else { return }
+                guard let self else { return }
                 switch cmd.requestType {
-                case "pause":        self.applyPause()
-                case "resume":       self.applyResume()
-                case "extend-grace": self.graceTimeRemaining = self.graceDuration
-                                     self.broadcastCurrentSessionState()
+                case "pause":
+                    if self.isHost { self.applyPause() }
+                case "resume":
+                    if self.isHost { self.applyResume() }
+                case "extend-grace":
+                    if self.isHost {
+                        self.graceTimeRemaining = self.graceDuration
+                        self.broadcastCurrentSessionState()
+                    }
+                case "schedule-proposal":
+                    self.handleReceivedMeetingProposal(from: cmd)
+                case "schedule-confirmed":
+                    self.handleMeetingConfirmed(cmd)
                 default: break
                 }
             }
@@ -679,5 +695,88 @@ class SessionViewModel: ObservableObject {
     static func generateCode(length: Int = 6) -> String {
         let characters = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
         return String((0..<length).compactMap { _ in characters.randomElement() })
+    }
+
+    // MARK: - Scheduling
+
+    func proposeMeeting(_ meeting: ScheduledMeeting) {
+        guard let payload = meeting.encodePayload() else { return }
+        multipeerService?.sendCommand("schedule-proposal", userId: currentUserId, payload: payload)
+        addLogEntry(
+            type: .modificationRequested,
+            message: "You proposed a meeting: \(meeting.title) on \(meeting.formattedDateTime)"
+        )
+    }
+
+    func acceptMeetingProposal() {
+        guard let meeting = receivedMeetingProposal else { return }
+        guard let payload = meeting.encodePayload() else { return }
+        multipeerService?.sendCommand("schedule-confirmed", userId: currentUserId, payload: payload)
+        addToCalendar(meeting)
+        lastConfirmedMeeting = meeting
+        receivedMeetingProposal = nil
+        addLogEntry(
+            type: .modificationApproved,
+            message: "Meeting confirmed: \(meeting.title) on \(meeting.formattedDateTime)"
+        )
+    }
+
+    func dismissMeetingProposal() {
+        receivedMeetingProposal = nil
+    }
+
+    private func handleReceivedMeetingProposal(from cmd: SessionMessagingService.SessionSyncMessage) {
+        guard let payload = cmd.payload,
+              let meeting = ScheduledMeeting.decode(from: payload) else { return }
+        receivedMeetingProposal = meeting
+        addLogEntry(
+            type: .modificationRequested,
+            message: "\(meeting.proposedByName) proposed a meeting: \(meeting.title)"
+        )
+    }
+
+    private func handleMeetingConfirmed(_ cmd: SessionMessagingService.SessionSyncMessage) {
+        guard let payload = cmd.payload,
+              let meeting = ScheduledMeeting.decode(from: payload) else { return }
+        addToCalendar(meeting)
+        lastConfirmedMeeting = meeting
+        addLogEntry(
+            type: .modificationApproved,
+            message: "Meeting confirmed by other party: \(meeting.title)"
+        )
+    }
+
+    func addToCalendar(_ meeting: ScheduledMeeting) {
+        let store = EKEventStore()
+        let addEvent: () -> Void = {
+            let event = EKEvent(eventStore: store)
+            event.title = meeting.title
+            event.startDate = meeting.scheduledDate
+            event.endDate = meeting.endDate
+            event.notes = "Scheduled via Safe Talk"
+            event.calendar = store.defaultCalendarForNewEvents
+            do {
+                try store.save(event, span: .thisEvent)
+            } catch {
+                DispatchQueue.main.async { [weak self] in
+                    self?.addLogEntry(
+                        type: .modificationDenied,
+                        message: "Could not save to calendar: \(error.localizedDescription)"
+                    )
+                }
+            }
+        }
+
+        if #available(iOS 17.0, *) {
+            store.requestWriteOnlyAccessToEvents { granted, _ in
+                guard granted else { return }
+                addEvent()
+            }
+        } else {
+            store.requestAccess(to: .event) { granted, _ in
+                guard granted else { return }
+                addEvent()
+            }
+        }
     }
 }

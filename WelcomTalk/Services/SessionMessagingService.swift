@@ -11,7 +11,7 @@ class SessionMessagingService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     struct SessionSyncMessage: Codable {
-        let type: String // "join-session", "session-state", "turn-update", "request"
+        let type: String // "join-session", "session-state", "turn-update", "request", "command"
         let sessionCode: String
         let userId: String
         let userName: String?
@@ -19,6 +19,29 @@ class SessionMessagingService: ObservableObject {
         let confirmationCode: String?
         let session: SessionData?
         let requestType: String?
+        let payload: String? // arbitrary command data (e.g. JSON-encoded ScheduledMeeting)
+
+        init(
+            type: String,
+            sessionCode: String,
+            userId: String,
+            userName: String?,
+            isHost: Bool?,
+            confirmationCode: String?,
+            session: SessionData?,
+            requestType: String?,
+            payload: String? = nil
+        ) {
+            self.type = type
+            self.sessionCode = sessionCode
+            self.userId = userId
+            self.userName = userName
+            self.isHost = isHost
+            self.confirmationCode = confirmationCode
+            self.session = session
+            self.requestType = requestType
+            self.payload = payload
+        }
         
         struct SessionData: Codable {
             let title: String
