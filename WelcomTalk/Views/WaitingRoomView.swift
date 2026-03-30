@@ -21,7 +21,7 @@ struct WaitingRoomView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     DetailRow(icon: "person.fill",         title: "Host",          value: sessionViewModel.session?.partyAName ?? "You")
                     DetailRow(icon: "timer",               title: "Time per turn", value: timeString(from: sessionViewModel.session?.turnDuration ?? 120))
-                    DetailRow(icon: "arrow.left.arrow.right", title: "Total turns", value: "\(sessionViewModel.session?.maxTurns ?? 10)")
+                    DetailRow(icon: "arrow.left.arrow.right", title: "Rounds", value: "\(sessionViewModel.session?.maxTurns ?? 2) each  (\(sessionViewModel.session?.totalTurns ?? 4) total)")
                 }
                 .padding(20)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.1)))
@@ -215,7 +215,7 @@ struct DetailRow: View {
                 status: .waiting,
                 currentTurn: .partyA,
                 currentTurnNumber: 1,
-                maxTurns: 4,
+                maxTurns: 2,
                 turnDuration: 60,
                 partyAId: "user1",
                 partyBId: "",

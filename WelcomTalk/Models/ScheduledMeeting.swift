@@ -1,5 +1,10 @@
 import Foundation
 
+/// A proposed or confirmed follow-up meeting between the two session parties.
+///
+/// Proposals are sent over Multipeer as a JSON-encoded payload inside a `"schedule-proposal"` command.
+/// When the other party accepts, a `"schedule-confirmed"` command fires back and both devices
+/// add the event to their iOS Calendar via EventKit.
 struct ScheduledMeeting: Identifiable, Codable {
     let id: String
     var title: String

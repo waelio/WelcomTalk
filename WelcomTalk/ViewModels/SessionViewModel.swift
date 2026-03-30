@@ -2,6 +2,12 @@ import Foundation
 import Combine
 import EventKit
 
+/// Central view-model managing session state, timer, speech recognition, Multipeer sync, and scheduling.
+///
+/// The **host** drives the countdown clock and broadcasts state every second via Multipeer Connectivity.
+/// The **guest** mirrors state by observing those broadcasts. Either party can pause, extend the
+/// grace period, or propose a next meeting — clock changes are applied by the host; guests send
+/// typed commands that the host receives and acts on.
 class SessionViewModel: ObservableObject {
     @Published var session: Session?
     @Published var timeRemaining: TimeInterval = 120
@@ -102,7 +108,9 @@ class SessionViewModel: ObservableObject {
     }
     
     // MARK: - Session Management
-    
+
+    /// Begins the turn countdown sequence. Always starts with a grace period so both parties
+    /// can prepare before the actual speaking timer begins counting down.
     func startTimer() {
         guard isHost else { return }
         startGracePeriod()
@@ -205,6 +213,8 @@ class SessionViewModel: ObservableObject {
         startGracePeriod()
     }
     
+    /// Terminates the session immediately, stops all timers, logs the final entry,
+    /// disconnects Multipeer, and presents the post-session rating screen.
     func endSession() {
         guard var session = session else { return }
         graceTimer?.invalidate()
@@ -242,7 +252,8 @@ class SessionViewModel: ObservableObject {
         session.currentTurnNumber += 1
         session.turnStartedAt = Date()
 
-        if session.currentTurnNumber > session.maxTurns {
+        // totalTurns = maxTurns × 2 (rounds per party × 2 parties).
+        if session.currentTurnNumber > session.totalTurns {
             session.status = .completed
             addLogEntry(type: .sessionEnded, message: "Session completed - max turns reached")
             self.session = session
@@ -411,7 +422,7 @@ class SessionViewModel: ObservableObject {
             status: .active,
             currentTurn: .partyB,       // Sam's turn is live
             currentTurnNumber: 4,
-            maxTurns: 4,
+            maxTurns: 2,            // 2 rounds each → 4 total turns
             turnDuration: 45,
             partyAId: currentUserId,
             partyBId: samId,

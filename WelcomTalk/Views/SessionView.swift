@@ -228,8 +228,9 @@ struct SessionView: View {
                 timerCircle
             }
 
-            if let currentTurn = sessionViewModel.session?.currentTurnNumber {
-                Text("Turn \(currentTurn) of \(sessionViewModel.session?.maxTurns ?? 10)")
+            if let currentTurn = sessionViewModel.session?.currentTurnNumber,
+               let session = sessionViewModel.session {
+                Text("Turn \(currentTurn) of \(session.totalTurns)  (\(session.maxTurns) each)")
                     .font(.headline)
             }
         }

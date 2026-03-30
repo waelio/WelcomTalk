@@ -39,6 +39,7 @@ class MultipeerService: NSObject, ObservableObject {
 
     // MARK: - Host: advertise session code
 
+    /// Starts advertising this device as a hostable session. Call on the host device only.
     func startHosting() {
         advertiser = MCNearbyServiceAdvertiser(
             peer: myPeerID,
@@ -56,6 +57,7 @@ class MultipeerService: NSObject, ObservableObject {
 
     // MARK: - Guest: browse for host with matching code
 
+    /// Begins scanning for a nearby host advertising the same session code. Call on the guest device only.
     func startBrowsing() {
         browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: Self.serviceType)
         browser?.delegate = self
@@ -69,6 +71,7 @@ class MultipeerService: NSObject, ObservableObject {
 
     // MARK: - Messaging (same API as SessionMessagingService)
 
+    /// Announces this device's presence and role (host/guest) to all connected peers.
     func announceSession(userId: String, userName: String, isHost: Bool, confirmationCode: String?) {
         send(SessionMessagingService.SessionSyncMessage(
             type: "join-session",
@@ -134,6 +137,8 @@ class MultipeerService: NSObject, ObservableObject {
         ))
     }
 
+    /// Sends an instant command to all peers (pause, resume, extend-grace, schedule-proposal, etc.).
+    /// The optional `payload` carries JSON-encoded data for commands that need it (e.g. a meeting proposal).
     func sendCommand(_ command: String, userId: String, payload: String? = nil) {
         send(SessionMessagingService.SessionSyncMessage(
             type: "command",

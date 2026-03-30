@@ -11,8 +11,10 @@ struct CreateSessionView: View {
     @StateObject private var nfcManager = NFCSessionManager()
     @State private var sessionTitle: String = ""
     @State private var userName: String = ""
-    @State private var maxTurns: Int = 10
-    @State private var turnDuration: TimeInterval = 120
+    /// Rounds per party. Total turn count = maxTurns × 2. Default: 2 rounds each (4 total).
+    @State private var maxTurns: Int = 2
+    /// Speaking time per turn in seconds. Default: 1 minute.
+    @State private var turnDuration: TimeInterval = 60
     @State private var createdSession: Session?
     @FocusState private var focusedField: Field?
     
@@ -30,13 +32,17 @@ struct CreateSessionView: View {
                         .submitLabel(.done)
                         .focused($focusedField, equals: .userName)
                     
-                    Picker("Number of Turns", selection: $maxTurns) {
-                        ForEach([5, 10, 15, 20], id: \.self) { turns in
-                            Text("\(turns) turns each").tag(turns)
-                        }
+                    Picker("Rounds per Person", selection: $maxTurns) {
+                        Text("2 rounds each  (4 total)").tag(2)
+                        Text("4 rounds each  (8 total)").tag(4)
+                        Text("6 rounds each  (12 total)").tag(6)
+                        Text("8 rounds each  (16 total)").tag(8)
+                        Text("10 rounds each  (20 total)").tag(10)
                     }
                     
                     Picker("Time Per Turn", selection: $turnDuration) {
+                        Text("30 seconds  (quick)").tag(TimeInterval(30))
+                        Text("45 seconds").tag(TimeInterval(45))
                         Text("1 minute").tag(TimeInterval(60))
                         Text("2 minutes").tag(TimeInterval(120))
                         Text("3 minutes").tag(TimeInterval(180))
@@ -126,8 +132,7 @@ private struct InstructionRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: icon)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(color)
+                .foregroundColor(color)
                 .frame(width: 18)
 
             Text(text)

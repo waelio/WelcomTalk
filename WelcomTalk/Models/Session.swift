@@ -1,5 +1,7 @@
 import Foundation
 
+/// Represents a single structured conversation session between two parties.
+/// Both parties alternate timed speaking turns; the session ends when all rounds are complete.
 struct Session: Identifiable, Codable {
     let id: String
     var title: String
@@ -7,7 +9,10 @@ struct Session: Identifiable, Codable {
     var status: SessionStatus
     var currentTurn: TurnParty
     var currentTurnNumber: Int
+    /// Number of speaking rounds **per party**. Total turns across both parties = `maxTurns × 2`.
     var maxTurns: Int
+    /// Total turn slots across both parties combined (derived from `maxTurns`).
+    var totalTurns: Int { maxTurns * 2 }
     var turnDuration: TimeInterval
     var partyAId: String
     var partyBId: String
@@ -48,7 +53,7 @@ struct Session: Identifiable, Codable {
          status: SessionStatus = .waiting,
          currentTurn: TurnParty = .partyA,
          currentTurnNumber: Int = 1,
-         maxTurns: Int = 10,
+         maxTurns: Int = 2,
          turnDuration: TimeInterval = 120,
          partyAId: String,
          partyBId: String,
