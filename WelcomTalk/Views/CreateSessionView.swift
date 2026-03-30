@@ -13,8 +13,8 @@ struct CreateSessionView: View {
     @State private var userName: String = ""
     /// Rounds per party. Total turn count = maxTurns × 2. Default: 2 rounds each (4 total).
     @State private var maxTurns: Int = 2
-    /// Speaking time per turn in seconds. Default: 1 minute.
-    @State private var turnDuration: TimeInterval = 60
+    /// Speaking time per turn in seconds. Default: 30 seconds.
+    @State private var turnDuration: TimeInterval = 30
     @State private var createdSession: Session?
     @FocusState private var focusedField: Field?
     
@@ -43,6 +43,7 @@ struct CreateSessionView: View {
                     Picker("Time Per Turn", selection: $turnDuration) {
                         Text("30 seconds  (quick)").tag(TimeInterval(30))
                         Text("45 seconds").tag(TimeInterval(45))
+                        Text("50 seconds").tag(TimeInterval(50))
                         Text("1 minute").tag(TimeInterval(60))
                         Text("2 minutes").tag(TimeInterval(120))
                         Text("3 minutes").tag(TimeInterval(180))
