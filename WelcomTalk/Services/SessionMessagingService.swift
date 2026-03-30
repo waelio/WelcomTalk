@@ -30,6 +30,8 @@ class SessionMessagingService: ObservableObject {
             let status: String
             let partyAId: String
             let partyBId: String
+            let graceTimeRemaining: Double
+            let isInGracePeriod: Bool
         }
     }
     
@@ -73,7 +75,9 @@ class SessionMessagingService: ObservableObject {
         timeRemaining: Double,
         status: String,
         partyAId: String,
-        partyBId: String
+        partyBId: String,
+        graceTimeRemaining: Double,
+        isInGracePeriod: Bool
     ) {
         let sessionData = SessionSyncMessage.SessionData(
             title: title,
@@ -84,7 +88,9 @@ class SessionMessagingService: ObservableObject {
             timeRemaining: timeRemaining,
             status: status,
             partyAId: partyAId,
-            partyBId: partyBId
+            partyBId: partyBId,
+            graceTimeRemaining: graceTimeRemaining,
+            isInGracePeriod: isInGracePeriod
         )
         
         let message = SessionSyncMessage(

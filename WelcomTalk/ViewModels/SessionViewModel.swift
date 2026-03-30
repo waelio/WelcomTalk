@@ -14,6 +14,13 @@ class SessionViewModel: ObservableObject {
     @Published var showRatingView: Bool = false
     @Published var pendingParticipantName: String?
 
+    // MARK: - Grace Period & Pause
+    @Published var isInGracePeriod = false
+    @Published var graceTimeRemaining: TimeInterval = 15
+
+    private let graceDuration: TimeInterval = 15
+    private var graceTimer: Timer?
+
     // MARK: - Speech Recognition
     let speechService = SpeechRecognitionService()
     /// Forwarded from speechService so views can bind directly to the view-model.
@@ -90,35 +97,114 @@ class SessionViewModel: ObservableObject {
     // MARK: - Session Management
     
     func startTimer() {
-        guard isHost else {
-            timer?.invalidate()
-            timer = nil
-            return
-        }
+        guard isHost else { return }
+        startGracePeriod()
+    }
 
+    // MARK: - Grace Period
+
+    private func startGracePeriod() {
+        guard isHost else { return }
+        graceTimer?.invalidate()
+        graceTimer = nil
+        isInGracePeriod = true
+        graceTimeRemaining = graceDuration
+        broadcastCurrentSessionState()
+        graceTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            if self.graceTimeRemaining > 1 {
+                self.graceTimeRemaining -= 1
+                self.broadcastCurrentSessionState()
+            } else {
+                self.endGracePeriod()
+            }
+        }
+    }
+
+    private func endGracePeriod() {
+        graceTimer?.invalidate()
+        graceTimer = nil
+        isInGracePeriod = false
+        broadcastCurrentSessionState()
+        startActualTimer()
+    }
+
+    private func startActualTimer() {
+        guard isHost else { return }
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-
             if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
             } else {
                 self.handleTurnEnd()
             }
-
-            // Auto-mute logic
             self.updateMuteStatus()
             self.broadcastCurrentSessionState()
         }
-
-        // Begin transcribing the first turn if it belongs to us.
         startSpeechRecognitionIfMyTurn()
+        updateMuteStatus()
+    }
+
+    // MARK: - Pause / Resume
+
+    /// Either party can call this — no approval required.
+    func pauseSession() {
+        if isHost {
+            applyPause()
+        } else {
+            multipeerService?.sendCommand("pause", userId: currentUserId)
+        }
+    }
+
+    func resumeSession() {
+        if isHost {
+            applyResume()
+        } else {
+            multipeerService?.sendCommand("resume", userId: currentUserId)
+        }
+    }
+
+    func extendGrace() {
+        if isHost {
+            graceTimeRemaining = graceDuration
+            broadcastCurrentSessionState()
+        } else {
+            multipeerService?.sendCommand("extend-grace", userId: currentUserId)
+        }
+    }
+
+    private func applyPause() {
+        guard var session = session else { return }
+        guard session.status == .active || isInGracePeriod else { return }
+        graceTimer?.invalidate()
+        graceTimer = nil
+        timer?.invalidate()
+        timer = nil
+        let wasInGrace = isInGracePeriod
+        isInGracePeriod = false
+        session.status = .paused
+        self.session = session
+        addLogEntry(type: .pause, message: wasInGrace ? "Session paused during grace period" : "Session paused")
+        broadcastCurrentSessionState()
+    }
+
+    private func applyResume() {
+        guard var session = session else { return }
+        guard session.status == .paused else { return }
+        session.status = .active
+        self.session = session
+        addLogEntry(type: .resume, message: "Session resumed")
+        startGracePeriod()
     }
     
     func endSession() {
         guard var session = session else { return }
+        graceTimer?.invalidate()
+        graceTimer = nil
         timer?.invalidate()
         timer = nil
+        isInGracePeriod = false
         // Stop transcription and log whatever was captured for the current turn.
         stopSpeechRecognitionAndLog(for: session.currentTurn, turnNumber: session.currentTurnNumber)
         session.status = .completed
@@ -135,6 +221,10 @@ class SessionViewModel: ObservableObject {
         guard isHost else { return }
         guard var session = session else { return }
 
+        // Invalidate the running countdown timer first.
+        timer?.invalidate()
+        timer = nil
+
         // Stop transcription for the turn that just ended and log it.
         stopSpeechRecognitionAndLog(for: session.currentTurn, turnNumber: session.currentTurnNumber)
 
@@ -147,18 +237,16 @@ class SessionViewModel: ObservableObject {
 
         if session.currentTurnNumber > session.maxTurns {
             session.status = .completed
-            timer?.invalidate()
             addLogEntry(type: .sessionEnded, message: "Session completed - max turns reached")
+            self.session = session
+            broadcastCurrentSessionState()
             showRatingView = true
         } else {
             addLogEntry(type: .turnStarted, message: "\(session.currentTurn.displayName) turn started")
             timeRemaining = session.turnDuration
-            // Start transcription for the new turn if it is our turn.
-            startSpeechRecognitionIfMyTurn(nextTurn: session.currentTurn)
+            self.session = session
+            startGracePeriod()
         }
-
-        self.session = session
-        broadcastCurrentSessionState()
     }
 
     private func updateMuteStatus() {
@@ -445,6 +533,22 @@ class SessionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // Host handles instant commands sent by the guest (pause, resume, extend-grace).
+        service.$commandReceived
+            .compactMap { $0 }
+            .filter { [weak self] cmd in cmd.userId != self?.currentUserId }
+            .sink { [weak self] cmd in
+                guard let self, self.isHost else { return }
+                switch cmd.requestType {
+                case "pause":        self.applyPause()
+                case "resume":       self.applyResume()
+                case "extend-grace": self.graceTimeRemaining = self.graceDuration
+                                     self.broadcastCurrentSessionState()
+                default: break
+                }
+            }
+            .store(in: &cancellables)
+
         if isHost {
             service.startHosting()
         } else {
@@ -517,6 +621,8 @@ class SessionViewModel: ObservableObject {
 
         self.session = session
         self.timeRemaining = remoteSession.timeRemaining
+        self.isInGracePeriod = remoteSession.isInGracePeriod
+        self.graceTimeRemaining = remoteSession.graceTimeRemaining
         updateMuteStatus()
 
         if session.status == .active && myParty == nil {
@@ -540,7 +646,9 @@ class SessionViewModel: ObservableObject {
             timeRemaining: timeRemaining,
             status: session.status.rawValue,
             partyAId: session.partyAId,
-            partyBId: session.partyBId
+            partyBId: session.partyBId,
+            graceTimeRemaining: graceTimeRemaining,
+            isInGracePeriod: isInGracePeriod
         )
     }
 

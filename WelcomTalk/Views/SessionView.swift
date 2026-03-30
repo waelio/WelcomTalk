@@ -206,32 +206,85 @@ struct SessionView: View {
     // MARK: - Timer Section
     private var timerSection: some View {
         VStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .stroke(lineWidth: 15)
-                    .opacity(0.3)
-                    .foregroundColor(timerColor)
-                
-                Circle()
-                    .trim(from: 0.0, to: progressValue)
-                    .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round))
-                    .foregroundColor(timerColor)
-                    .rotationEffect(Angle(degrees: -90))
-                
-                VStack {
+            if sessionViewModel.isInGracePeriod {
+                gracePeriodView
+            } else {
+                timerCircle
+            }
+
+            if let currentTurn = sessionViewModel.session?.currentTurnNumber {
+                Text("Turn \(currentTurn) of \(sessionViewModel.session?.maxTurns ?? 10)")
+                    .font(.headline)
+            }
+        }
+    }
+
+    private var timerCircle: some View {
+        ZStack {
+            Circle()
+                .stroke(lineWidth: 15)
+                .opacity(0.3)
+                .foregroundColor(timerColor)
+
+            Circle()
+                .trim(from: 0.0, to: progressValue)
+                .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round))
+                .foregroundColor(timerColor)
+                .rotationEffect(Angle(degrees: -90))
+
+            VStack {
+                if sessionViewModel.session?.status == .paused {
+                    Image(systemName: "pause.circle.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.orange)
+                    Text("Paused")
+                        .font(.headline)
+                        .foregroundColor(.orange)
+                } else {
                     Text(timeString(from: sessionViewModel.timeRemaining))
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                    
+
                     Text("remaining")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
             }
+        }
+        .frame(width: 200, height: 200)
+    }
+
+    private var gracePeriodView: some View {
+        VStack(spacing: 12) {
+            Text("Turn starting in")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            ZStack {
+                Circle()
+                    .stroke(Color.orange.opacity(0.3), lineWidth: 15)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(sessionViewModel.graceTimeRemaining / 15))
+                    .stroke(Color.orange, style: StrokeStyle(lineWidth: 15, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: sessionViewModel.graceTimeRemaining)
+
+                Text("\(Int(sessionViewModel.graceTimeRemaining))")
+                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .foregroundColor(.orange)
+            }
             .frame(width: 200, height: 200)
-            
-            if let currentTurn = sessionViewModel.session?.currentTurnNumber {
-                Text("Turn \(currentTurn) of \(sessionViewModel.session?.maxTurns ?? 10)")
-                    .font(.headline)
+
+            Button {
+                sessionViewModel.extendGrace()
+            } label: {
+                Label("Need a moment", systemImage: "clock.arrow.circlepath")
+                    .font(.subheadline.bold())
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.orange.opacity(0.15))
+                    .foregroundColor(.orange)
+                    .clipShape(Capsule())
             }
         }
     }
@@ -494,6 +547,26 @@ struct SessionView: View {
                 
                 Spacer()
                 
+                // Direct pause / resume button — no approval required
+                if sessionViewModel.session?.status == .active || sessionViewModel.session?.status == .paused {
+                    Button {
+                        if sessionViewModel.session?.status == .paused {
+                            sessionViewModel.resumeSession()
+                        } else {
+                            sessionViewModel.pauseSession()
+                        }
+                    } label: {
+                        Image(systemName: sessionViewModel.session?.status == .paused
+                              ? "play.circle.fill"
+                              : "pause.circle.fill")
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(sessionViewModel.session?.status == .paused
+                                             ? Color.green : Color.orange)
+                            .font(.title2)
+                            .padding(.horizontal)
+                    }
+                }
+
                 // Pending requests indicator
                 if !sessionViewModel.pendingRequests.isEmpty {
                     Button(action: { showingModificationSheet = true }) {
@@ -524,22 +597,6 @@ struct SessionView: View {
                             type: .addTurn,
                             reason: "Additional turn needed"
                         )
-                    }
-                    
-                    Button("Pause Session") {
-                        sessionViewModel.requestModification(
-                            type: .pauseSession,
-                            reason: "Brief pause requested"
-                        )
-                    }
-                    
-                    if sessionViewModel.session?.status == .paused {
-                        Button("Resume Session") {
-                            sessionViewModel.requestModification(
-                                type: .resumeSession,
-                                reason: "Resume negotiation"
-                            )
-                        }
                     }
                     
                     Button("End Session", role: .destructive) {

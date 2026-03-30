@@ -11,6 +11,7 @@ class MultipeerService: NSObject, ObservableObject {
 
     @Published var joinAnnouncement: SessionMessagingService.SessionSyncMessage?
     @Published var sessionState: SessionMessagingService.SessionSyncMessage?
+    @Published var commandReceived: SessionMessagingService.SessionSyncMessage?
     @Published var isConnected = false
 
     // MARK: - Private
@@ -91,7 +92,9 @@ class MultipeerService: NSObject, ObservableObject {
         timeRemaining: Double,
         status: String,
         partyAId: String,
-        partyBId: String
+        partyBId: String,
+        graceTimeRemaining: Double,
+        isInGracePeriod: Bool
     ) {
         let data = SessionMessagingService.SessionSyncMessage.SessionData(
             title: title,
@@ -102,7 +105,9 @@ class MultipeerService: NSObject, ObservableObject {
             timeRemaining: timeRemaining,
             status: status,
             partyAId: partyAId,
-            partyBId: partyBId
+            partyBId: partyBId,
+            graceTimeRemaining: graceTimeRemaining,
+            isInGracePeriod: isInGracePeriod
         )
         send(SessionMessagingService.SessionSyncMessage(
             type: "session-state",
@@ -126,6 +131,19 @@ class MultipeerService: NSObject, ObservableObject {
             confirmationCode: nil,
             session: nil,
             requestType: requestType
+        ))
+    }
+
+    func sendCommand(_ command: String, userId: String) {
+        send(SessionMessagingService.SessionSyncMessage(
+            type: "command",
+            sessionCode: sessionCode,
+            userId: userId,
+            userName: nil,
+            isHost: nil,
+            confirmationCode: nil,
+            session: nil,
+            requestType: command
         ))
     }
 
@@ -153,6 +171,8 @@ class MultipeerService: NSObject, ObservableObject {
                 self.joinAnnouncement = msg
             case "session-state":
                 self.sessionState = msg
+            case "command":
+                self.commandReceived = msg
             default:
                 break
             }
