@@ -309,28 +309,93 @@ class SessionViewModel: ObservableObject {
     }
     
     // MARK: - Mock Data
-    
+
     private func createMockSession() {
+        // Scenario: Two colleagues — Alex (you) and Sam — wrapping up a positive
+        // discussion about reclaiming work-life balance. 3 turns already done,
+        // Sam is mid-way through turn 4 (the final turn). Short & positive.
+        let samId = "user-sam-demo"
         let session = Session(
-            title: "Demo Negotiation",
-            sessionCode: "DEMO\(Int.random(in: 1000...9999))",
+            title: "Finding More Time Together",
+            sessionCode: "DEMO42",
             status: .active,
-            currentTurn: .partyA,
-            currentTurnNumber: 1,
-            maxTurns: 10,
-            turnDuration: 120,
+            currentTurn: .partyB,       // Sam's turn is live
+            currentTurnNumber: 4,
+            maxTurns: 4,
+            turnDuration: 45,
             partyAId: currentUserId,
-            partyBId: "user-other",
+            partyBId: samId,
+            partyAName: "Alex",         // You
+            partyBName: "Sam",
             turnStartedAt: Date()
         )
-        
+
         self.session = session
-        self.myParty = .partyA
-        self.timeRemaining = session.turnDuration
-        
-        addLogEntry(type: .sessionStarted, message: "Demo session started")
-        addLogEntry(type: .turnStarted, message: "\(session.currentTurn.displayName) turn started")
-        
+        self.myParty = .partyA          // You are Alex
+        self.timeRemaining = 32         // Sam is mid-turn
+
+        // ── Pre-seed log (build array directly so we control timestamps) ──
+        let ago: (TimeInterval) -> Date = { Date(timeIntervalSinceNow: $0) }
+
+        logEntries = [
+            // Turn 4 — most recent at top
+            LogEntry(sessionId: session.id, type: .turnStarted,
+                     message: "Sam's turn started",
+                     timestamp: ago(-13)),
+            LogEntry(sessionId: session.id, type: .turnEnded,
+                     message: "Alex's turn ended",
+                     timestamp: ago(-15)),
+            LogEntry(sessionId: session.id, type: .turnTranscription,
+                     message: "[Turn 3 – Alex] Wednesday dinner is a great idea. Even just 30 minutes reconnecting in the middle of the week makes such a difference. I feel really good about where this conversation is going.",
+                     timestamp: ago(-17)),
+            LogEntry(sessionId: session.id, type: .noteAdded,
+                     message: "Note added",
+                     timestamp: ago(-40)),
+            // Turn 3
+            LogEntry(sessionId: session.id, type: .turnStarted,
+                     message: "Alex's turn started",
+                     timestamp: ago(-60)),
+            LogEntry(sessionId: session.id, type: .turnEnded,
+                     message: "Sam's turn ended",
+                     timestamp: ago(-62)),
+            LogEntry(sessionId: session.id, type: .turnTranscription,
+                     message: "[Turn 2 – Sam] I completely agree. If we protect Sundays as our day — no work, no phones — and maybe add a Wednesday dinner just the two of us, I think we'd both feel so much more connected.",
+                     timestamp: ago(-64)),
+            LogEntry(sessionId: session.id, type: .noteAdded,
+                     message: "Note added",
+                     timestamp: ago(-80)),
+            // Turn 2
+            LogEntry(sessionId: session.id, type: .turnStarted,
+                     message: "Sam's turn started",
+                     timestamp: ago(-105)),
+            LogEntry(sessionId: session.id, type: .turnEnded,
+                     message: "Alex's turn ended",
+                     timestamp: ago(-107)),
+            LogEntry(sessionId: session.id, type: .turnTranscription,
+                     message: "[Turn 1 – Alex] I feel like we've both been so busy lately. I really miss our quality time together — I want us to protect some space just for us, even if it's small.",
+                     timestamp: ago(-109)),
+            // Turn 1
+            LogEntry(sessionId: session.id, type: .turnStarted,
+                     message: "Alex's turn started",
+                     timestamp: ago(-120)),
+            LogEntry(sessionId: session.id, type: .sessionStarted,
+                     message: "Demo session started",
+                     timestamp: ago(-122)),
+        ]
+
+        // ── Pre-seed Alex's private notes (your perspective) ──
+        notes = [
+            Note(sessionId: session.id, userId: currentUserId,
+                 content: "Suggest pasta night at home on Wednesdays 🍝",
+                 createdAt: ago(-42), turnNumber: 3),
+            Note(sessionId: session.id, userId: currentUserId,
+                 content: "Sunday blocked ✓ — remind Sam to update shared calendar",
+                 createdAt: ago(-82), turnNumber: 2),
+            Note(sessionId: session.id, userId: currentUserId,
+                 content: "Ask about the Wednesday idea — seemed really open to it",
+                 createdAt: ago(-111), turnNumber: 1),
+        ]
+
         updateMuteStatus()
     }
 

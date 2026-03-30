@@ -286,14 +286,15 @@ struct SessionView: View {
     }
     
     private func partyStatusCard(party: Session.TurnParty, isActive: Bool, isMe: Bool) -> some View {
-        VStack(spacing: 10) {
-            Text(party.displayName)
+        let name = sessionViewModel.session?.name(for: party) ?? party.displayName
+        return VStack(spacing: 10) {
+            Text(name)
                 .font(.headline)
-            
+
             Image(systemName: isActive ? "mic.fill" : "mic.slash.fill")
                 .font(.system(size: 30))
                 .foregroundColor(isActive ? .green : .red)
-            
+
             if isMe {
                 Text("You")
                     .font(.caption)

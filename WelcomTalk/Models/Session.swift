@@ -11,20 +11,22 @@ struct Session: Identifiable, Codable {
     var turnDuration: TimeInterval
     var partyAId: String
     var partyBId: String
+    var partyAName: String
+    var partyBName: String
     var createdAt: Date
     var turnStartedAt: Date?
-    
+
     enum SessionStatus: String, Codable {
         case waiting
         case active
         case paused
         case completed
     }
-    
+
     enum TurnParty: String, Codable {
         case partyA
         case partyB
-        
+
         var displayName: String {
             switch self {
             case .partyA: return "Party A"
@@ -32,7 +34,14 @@ struct Session: Identifiable, Codable {
             }
         }
     }
-    
+
+    func name(for party: TurnParty) -> String {
+        switch party {
+        case .partyA: return partyAName
+        case .partyB: return partyBName
+        }
+    }
+
     init(id: String = UUID().uuidString,
          title: String,
          sessionCode: String,
@@ -43,6 +52,8 @@ struct Session: Identifiable, Codable {
          turnDuration: TimeInterval = 120,
          partyAId: String,
          partyBId: String,
+         partyAName: String = "Party A",
+         partyBName: String = "Party B",
          createdAt: Date = Date(),
          turnStartedAt: Date? = nil) {
         self.id = id
@@ -55,6 +66,8 @@ struct Session: Identifiable, Codable {
         self.turnDuration = turnDuration
         self.partyAId = partyAId
         self.partyBId = partyBId
+        self.partyAName = partyAName
+        self.partyBName = partyBName
         self.createdAt = createdAt
         self.turnStartedAt = turnStartedAt
     }
