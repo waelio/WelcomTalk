@@ -10,12 +10,15 @@ class WebSocketService: NSObject, ObservableObject {
     @Published var receivedMessages: [Message] = []
     @Published var onlineUsers: [String] = []
     @Published var error: String?
-    
+    @Published var isReconnecting = false
+
     private var webSocketTask: URLSessionWebSocketTask?
     private var session: URLSession?
     private let serverURL: String
     private let userId: String
     private let userName: String
+    private var reconnectWorkItem: DispatchWorkItem?
+    private var reconnectAttempts = 0
     
     struct Message: Identifiable {
         let id = UUID()
@@ -59,23 +62,44 @@ class WebSocketService: NSObject, ObservableObject {
     }
     
     // MARK: - Connection
-    
+
     func connect() {
+        reconnectWorkItem?.cancel()
+        reconnectWorkItem = nil
+
         guard let url = URL(string: serverURL) else {
-            error = "Invalid server URL"
+            DispatchQueue.main.async { self.error = "Invalid server URL" }
             return
         }
-        
+
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = session?.webSocketTask(with: url)
         webSocketTask?.resume()
-        
-        // Start receiving messages
         receiveMessage()
     }
-    
+
     func disconnect() {
+        reconnectWorkItem?.cancel()
+        reconnectWorkItem = nil
+        reconnectAttempts = 0
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         isConnected = false
+        isReconnecting = false
+    }
+
+    private func scheduleReconnect() {
+        let delay = min(pow(2.0, Double(reconnectAttempts)), 30.0) // 2, 4, 8, 16, 30 s
+        reconnectAttempts += 1
+
+        DispatchQueue.main.async { self.isReconnecting = true }
+
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            DispatchQueue.main.async { self.isReconnecting = false }
+            self.connect()
+        }
+        reconnectWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
     
     // MARK: - Sending Messages
@@ -129,11 +153,12 @@ class WebSocketService: NSObject, ObservableObject {
                 // Continue listening
                 self.receiveMessage()
                 
-            case .failure(let error):
+            case .failure:
                 DispatchQueue.main.async {
-                    self.error = "Receive error: \(error.localizedDescription)"
                     self.isConnected = false
                 }
+                self.scheduleReconnect()
+                return // stop the receive loop; reconnect will restart it
             }
         }
     }
@@ -151,6 +176,8 @@ class WebSocketService: NSObject, ObservableObject {
                 self.clientId = json["id"] as? String
                 self.isConnected = true
                 self.error = nil
+                self.isReconnecting = false
+                self.reconnectAttempts = 0
             }
 
         case "user-list":
@@ -204,6 +231,10 @@ extension WebSocketService: URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         DispatchQueue.main.async {
             self.isConnected = false
+        }
+        // Only reconnect on abnormal closures (not when we called disconnect() intentionally)
+        if closeCode != .goingAway {
+            scheduleReconnect()
         }
     }
 }

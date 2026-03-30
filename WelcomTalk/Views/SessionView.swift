@@ -59,14 +59,6 @@ struct SessionView: View {
             ProgressView()
                 .scaleEffect(1.4)
 
-            if let errorMessage = sessionViewModel.errorMessage {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
             Spacer()
 
             Button("Cancel") {
@@ -77,7 +69,7 @@ struct SessionView: View {
             .padding(.bottom, 24)
         }
         .padding()
-        .navigationTitle(sessionViewModel.session?.title ?? "Joining")
+        .navigationTitle("Waiting")
         .navigationBarTitleDisplayMode(.inline)
     }
     

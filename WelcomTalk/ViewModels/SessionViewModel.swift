@@ -446,11 +446,11 @@ class SessionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // WebSocket errors are handled internally via auto-reconnect;
+        // do not surface them as user-facing error messages.
         webSocket.$error
             .compactMap { $0 }
-            .sink { [weak self] error in
-                self?.errorMessage = error
-            }
+            .sink { _ in }
             .store(in: &cancellables)
 
         webSocket.connect()

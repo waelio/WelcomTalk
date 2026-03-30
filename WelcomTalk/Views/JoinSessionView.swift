@@ -211,7 +211,7 @@ struct JoinSessionView: View {
             let userId = UUID().uuidString
             
             let session = Session(
-                title: "Connecting...",
+                title: "Session \(sessionCode.uppercased())",
                 sessionCode: sessionCode,
                 status: .waiting,
                 currentTurn: .partyA,
