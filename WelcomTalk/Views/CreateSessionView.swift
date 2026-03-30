@@ -17,7 +17,7 @@ struct CreateSessionView: View {
     @FocusState private var focusedField: Field?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Conversation Setup") {
                     TextField("Topic (e.g., Family Discussion)", text: $sessionTitle)

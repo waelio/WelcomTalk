@@ -19,7 +19,7 @@ struct JoinSessionView: View {
     @FocusState private var focusedField: Field?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Your Details") {
                     TextField("Your Name", text: $userName)

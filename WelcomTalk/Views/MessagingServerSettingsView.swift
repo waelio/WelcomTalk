@@ -10,7 +10,7 @@ struct MessagingServerSettingsView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section {
                     TextField("ws://192.168.1.100:8080", text: $customServerURL)

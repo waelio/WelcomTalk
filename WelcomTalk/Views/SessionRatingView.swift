@@ -13,7 +13,7 @@ struct SessionRatingView: View {
     @State private var showingThankYou = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 30) {
                     // Header
