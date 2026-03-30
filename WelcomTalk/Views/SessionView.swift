@@ -21,6 +21,10 @@ struct SessionView: View {
             if sessionViewModel.session?.status == .active,
                sessionViewModel.drivesSessionClock {
                 sessionViewModel.startTimer()
+            } else if sessionViewModel.session?.status == .active,
+                      !sessionViewModel.drivesSessionClock {
+                // Guest: start recognizing if the first turn belongs to them.
+                sessionViewModel.startSpeechRecognitionIfMyTurn()
             }
         }
     }
@@ -107,7 +111,12 @@ struct SessionView: View {
                     
                     // Party Status
                     partyStatusSection
-                    
+
+                    // Live Transcript (only during active turn)
+                    if sessionViewModel.session?.status == .active {
+                        liveTranscriptSection
+                    }
+
                     // Notes Section
                     notesSection
                     
@@ -305,6 +314,47 @@ struct SessionView: View {
         )
     }
     
+    // MARK: - Live Transcript Section
+    private var liveTranscriptSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: sessionViewModel.speechService.isRecognizing ? "waveform" : "waveform.slash")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(sessionViewModel.speechService.isRecognizing ? .green : .secondary)
+                Text(sessionViewModel.isMyTurn ? "Live Transcription" : "Waiting for your turn…")
+                    .font(.headline)
+                Spacer()
+                if sessionViewModel.speechService.isRecognizing {
+                    Text("Listening")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            }
+
+            if sessionViewModel.isMyTurn {
+                let transcript = sessionViewModel.liveTranscript
+                if transcript.isEmpty {
+                    Text(sessionViewModel.speechAuthorizationGranted ? "Start speaking…" : "Speech permission required – check Settings")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text(transcript)
+                        .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .animation(.default, value: transcript)
+                }
+            }
+        }
+        .padding()
+        .background(Color.green.opacity(0.05))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(sessionViewModel.speechService.isRecognizing ? Color.green.opacity(0.4) : Color.clear, lineWidth: 1)
+        )
+    }
+
     // MARK: - Notes Section
     private var notesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -429,6 +479,7 @@ struct SessionView: View {
         switch type {
         case .turnStarted: return .blue
         case .turnEnded: return .blue.opacity(0.5)
+        case .turnTranscription: return .teal
         case .modificationRequested: return .orange
         case .modificationApproved: return .green
         case .modificationDenied: return .red

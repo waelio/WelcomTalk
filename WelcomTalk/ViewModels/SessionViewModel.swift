@@ -14,6 +14,13 @@ class SessionViewModel: ObservableObject {
     @Published var showRatingView: Bool = false
     @Published var myConfirmationCode: String?
     @Published var pendingParticipantName: String?
+
+    // MARK: - Speech Recognition
+    let speechService = SpeechRecognitionService()
+    /// Forwarded from speechService so views can bind directly to the view-model.
+    @Published var liveTranscript: String = ""
+    @Published var speechAuthorizationGranted: Bool = false
+    private var speechCancellable: AnyCancellable?
     
     var myParty: Session.TurnParty?
     let currentUserId: String
@@ -54,7 +61,7 @@ class SessionViewModel: ObservableObject {
         self.currentUserId = userId ?? UUID().uuidString
         self.userName = userName
         self.isHost = isHost
-        
+
         if let session = session {
             self.session = session
             self.myParty = session.partyAId == self.currentUserId ? .partyA : .partyB
@@ -63,7 +70,7 @@ class SessionViewModel: ObservableObject {
             if !isHost && session.status == .waiting {
                 self.myConfirmationCode = Self.generateCode()
             }
-            
+
             if isHost {
                 addLogEntry(type: .sessionStarted, message: "\(userName) created session")
             } else {
@@ -74,6 +81,16 @@ class SessionViewModel: ObservableObject {
         } else {
             // For demo: create a mock session
             createMockSession()
+        }
+
+        // Forward live transcript from the speech service.
+        speechCancellable = speechService.$liveTranscript
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.liveTranscript, on: self)
+
+        // Request microphone + speech permissions asynchronously.
+        Task { @MainActor in
+            self.speechAuthorizationGranted = await self.speechService.requestAuthorization()
         }
     }
     
@@ -89,23 +106,28 @@ class SessionViewModel: ObservableObject {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            
+
             if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
             } else {
                 self.handleTurnEnd()
             }
-            
+
             // Auto-mute logic
             self.updateMuteStatus()
             self.broadcastCurrentSessionState()
         }
+
+        // Begin transcribing the first turn if it belongs to us.
+        startSpeechRecognitionIfMyTurn()
     }
     
     func endSession() {
         guard var session = session else { return }
         timer?.invalidate()
         timer = nil
+        // Stop transcription and log whatever was captured for the current turn.
+        stopSpeechRecognitionAndLog(for: session.currentTurn, turnNumber: session.currentTurnNumber)
         session.status = .completed
         self.session = session
         clearPendingParticipantHandshake()
@@ -117,14 +139,17 @@ class SessionViewModel: ObservableObject {
     private func handleTurnEnd() {
         guard isHost else { return }
         guard var session = session else { return }
-        
+
+        // Stop transcription for the turn that just ended and log it.
+        stopSpeechRecognitionAndLog(for: session.currentTurn, turnNumber: session.currentTurnNumber)
+
         addLogEntry(type: .turnEnded, message: "\(session.currentTurn.displayName) turn ended")
-        
+
         // Switch turns
         session.currentTurn = session.currentTurn == .partyA ? .partyB : .partyA
         session.currentTurnNumber += 1
         session.turnStartedAt = Date()
-        
+
         if session.currentTurnNumber > session.maxTurns {
             session.status = .completed
             timer?.invalidate()
@@ -133,14 +158,36 @@ class SessionViewModel: ObservableObject {
         } else {
             addLogEntry(type: .turnStarted, message: "\(session.currentTurn.displayName) turn started")
             timeRemaining = session.turnDuration
+            // Start transcription for the new turn if it is our turn.
+            startSpeechRecognitionIfMyTurn(nextTurn: session.currentTurn)
         }
-        
+
         self.session = session
         broadcastCurrentSessionState()
     }
-    
+
     private func updateMuteStatus() {
         isMuted = !isMyTurn
+    }
+
+    // MARK: - Speech Recognition helpers
+
+    func startSpeechRecognitionIfMyTurn(nextTurn: Session.TurnParty? = nil) {
+        let activeTurn = nextTurn ?? session?.currentTurn
+        guard speechAuthorizationGranted,
+              let activeTurn,
+              activeTurn == myParty else { return }
+        speechService.startRecognition()
+    }
+
+    private func stopSpeechRecognitionAndLog(for party: Session.TurnParty, turnNumber: Int) {
+        guard party == myParty else { return }
+        let transcript = speechService.stopRecognition()
+        guard !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        addLogEntry(
+            type: .turnTranscription,
+            message: "[Turn \(turnNumber) – \(party.displayName)] \(transcript)"
+        )
     }
     
     // MARK: - Notes
@@ -237,14 +284,21 @@ class SessionViewModel: ObservableObject {
     }
     
     func exportLog() -> URL? {
-        let logText = logEntries.map { entry in
-            "[\(entry.timestamp)] \(entry.type.rawValue): \(entry.message)"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+
+        let logText = logEntries.reversed().map { entry in
+            let time = formatter.string(from: entry.timestamp)
+            if entry.type == .turnTranscription {
+                return "[\(time)] 🎙 \(entry.message)"
+            }
+            return "[\(time)] \(entry.type.rawValue): \(entry.message)"
         }.joined(separator: "\n")
-        
+
         let tempDir = FileManager.default.temporaryDirectory
         let fileName = "session_log_\(Date().timeIntervalSince1970).txt"
         let fileURL = tempDir.appendingPathComponent(fileName)
-        
+
         do {
             try logText.write(to: fileURL, atomically: true, encoding: .utf8)
             return fileURL

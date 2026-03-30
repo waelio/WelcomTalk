@@ -30,15 +30,13 @@
 		1F1DBC8B2F5C266800D6E7D9 /* WelcomTalk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WelcomTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D49657A1EDE050C8A6A735F /* WelcomTalkUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WelcomTalkUITests.swift; sourceTree = "<group>"; };
 		9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CreateSessionUITests.swift; sourceTree = "<group>"; };
-		AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WelcomTalkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WelcomTalkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6D48E00D57C23A5B07C64D1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1F1DBC8D2F5C266800D6E7D9 /* WelcomTalk */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = WelcomTalk;
 			sourceTree = "<group>";
 		};
@@ -106,7 +104,6 @@
 				1DF09C87B3FD464BEDFF9E7A /* JoinSessionUITests.swift */,
 				0961C025A448FB2D1A855E79 /* DemoSessionUITests.swift */,
 			);
-			name = WelcomTalkUITests;
 			path = WelcomTalkUITests;
 			sourceTree = "<group>";
 		};
@@ -148,7 +145,7 @@
 			);
 			name = WelcomTalkUITests;
 			productName = WelcomTalkUITests;
-			productReference = AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests */;
+			productReference = AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -251,6 +248,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Safe Talk";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to scan QR codes for joining negotiation sessions";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WelcomTalk uses your microphone to transcribe your speaking turn so both parties can review a written record of the conversation.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WelcomTalk transcribes each participant's speaking turn to produce a complete session log of the conversation.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -287,6 +286,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Safe Talk";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to scan QR codes for joining negotiation sessions";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WelcomTalk uses your microphone to transcribe your speaking turn so both parties can review a written record of the conversation.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WelcomTalk transcribes each participant's speaking turn to produce a complete session log of the conversation.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -435,7 +436,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5CY5WTPYKZ;
-				INFOPLIST_FILE = WelcomTalkUITests/WelcomTalkUITests-Info.plist;
+				INFOPLIST_FILE = "WelcomTalkUITests/WelcomTalkUITests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -457,7 +458,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5CY5WTPYKZ;
-				INFOPLIST_FILE = WelcomTalkUITests/WelcomTalkUITests-Info.plist;
+				INFOPLIST_FILE = "WelcomTalkUITests/WelcomTalkUITests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

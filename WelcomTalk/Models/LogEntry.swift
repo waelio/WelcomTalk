@@ -13,6 +13,7 @@ struct LogEntry: Identifiable, Codable {
         case sessionEnded
         case turnStarted
         case turnEnded
+        case turnTranscription
         case modificationRequested
         case modificationApproved
         case modificationDenied
