@@ -49,8 +49,8 @@ struct CreateSessionView: View {
                         InstructionRow(icon: "timer", color: .blue, text: "Both people get equal, timed turns to speak")
                         InstructionRow(icon: "mic.slash", color: .red, text: "Only one person can talk at a time - no interruptions")
                         InstructionRow(icon: "square.and.arrow.up", color: .blue, text: "This phone shares the first code")
-                        InstructionRow(icon: "qrcode.viewfinder", color: .green, text: "When the other phone joins, it turns to a new barcode for you to scan")
-                        InstructionRow(icon: "play.circle.fill", color: .orange, text: "Scanning that new barcode starts the countdown on both phones")
+                        InstructionRow(icon: "person.wave.2.fill", color: .green, text: "When the other phone joins, tap \"Let Them In\" to approve them")
+                        InstructionRow(icon: "play.circle.fill", color: .orange, text: "Both countdowns start immediately once you approve")
                     }
                 }
                 

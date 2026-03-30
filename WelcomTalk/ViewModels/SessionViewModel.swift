@@ -523,8 +523,8 @@ class SessionViewModel: ObservableObject {
         self.timeRemaining = remoteSession.timeRemaining
         updateMuteStatus()
 
-        if session.status == .active {
-            myParty = myParty  // no-op, keep existing
+        if session.status == .active && myParty == nil {
+            myParty = (session.partyAId == currentUserId) ? .partyA : .partyB
         }
 
         timer?.invalidate()

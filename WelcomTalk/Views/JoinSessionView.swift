@@ -130,7 +130,7 @@ struct JoinSessionView: View {
                                 .foregroundColor(.secondary)
                         }
 
-                        Text("• After you join, this iPhone turns to a new barcode for the first phone to scan")
+                        Text("• After you join, wait for the host to tap \"Let Them In\" — the session starts on both phones automatically")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
