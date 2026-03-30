@@ -19,6 +19,6 @@
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>UITargetApplication</key>
-    <string>com.waelio.WelcomTalk</string>
+    <string>com.waelio.Welcom</string>
 </dict>
 </plist>
