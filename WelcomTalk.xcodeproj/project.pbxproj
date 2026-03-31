@@ -12,6 +12,7 @@
 		CB3EA88D6ADA36FDE5399B97 /* CreateSessionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */; };
 		DC149EA5777ABCF4A49216A1 /* DemoSessionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0961C025A448FB2D1A855E79 /* DemoSessionUITests.swift */; };
 		FE0F669B13D977F6D1B0AD56 /* JoinSessionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF09C87B3FD464BEDFF9E7A /* JoinSessionUITests.swift */; };
+		A3B4C5D6E7F8A3B4C5D6E7F8 /* AppStoreScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F8A3B4C5D6E7F8A3B4C5D6 /* AppStoreScreenshotTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,6 +31,7 @@
 		1F1DBC8B2F5C266800D6E7D9 /* WelcomTalk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WelcomTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D49657A1EDE050C8A6A735F /* WelcomTalkUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WelcomTalkUITests.swift; sourceTree = "<group>"; };
 		9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CreateSessionUITests.swift; sourceTree = "<group>"; };
+		E7F8A3B4C5D6E7F8A3B4C5D6 /* AppStoreScreenshotTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshotTests.swift; sourceTree = "<group>"; };
 		AA9BD3EE0B47552B1F8DE3DF /* WelcomTalkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WelcomTalkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6D48E00D57C23A5B07C64D1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
@@ -103,6 +105,7 @@
 				9769D2DDC9726041DE15CBCB /* CreateSessionUITests.swift */,
 				1DF09C87B3FD464BEDFF9E7A /* JoinSessionUITests.swift */,
 				0961C025A448FB2D1A855E79 /* DemoSessionUITests.swift */,
+				E7F8A3B4C5D6E7F8A3B4C5D6 /* AppStoreScreenshotTests.swift */,
 			);
 			path = WelcomTalkUITests;
 			sourceTree = "<group>";
@@ -213,6 +216,7 @@
 				CB3EA88D6ADA36FDE5399B97 /* CreateSessionUITests.swift in Sources */,
 				FE0F669B13D977F6D1B0AD56 /* JoinSessionUITests.swift in Sources */,
 				DC149EA5777ABCF4A49216A1 /* DemoSessionUITests.swift in Sources */,
+				A3B4C5D6E7F8A3B4C5D6E7F8 /* AppStoreScreenshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

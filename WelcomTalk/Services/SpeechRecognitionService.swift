@@ -40,6 +40,9 @@ final class SpeechRecognitionService: ObservableObject {
     /// Request both microphone and speech-recognition authorization.
     /// Returns `true` when both are granted.
     func requestAuthorization() async -> Bool {
+        #if targetEnvironment(simulator)
+        return true  // Skip permission dialogs in simulator
+        #endif
         let speechStatus = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
                 continuation.resume(returning: status)
