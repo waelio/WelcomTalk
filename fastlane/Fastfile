@@ -1,0 +1,40 @@
+default_platform(:ios)
+
+platform :ios do
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 1. Capture fresh screenshots (runs XCUITest, saves to fastlane/screenshots)
+  # ─────────────────────────────────────────────────────────────────────────────
+  lane :capture do
+    sh("bash /tmp/take_screenshots.sh")
+    # Sync the freshly-captured files into the fastlane folder
+    Dir.glob("/tmp/screenshots/*.png").each do |f|
+      dest = File.join(File.dirname(__FILE__), "screenshots/en-US/iPhone 6.9-inch/#{File.basename(f)}")
+      FileUtils.cp(f, dest)
+    end
+    UI.success "Screenshots copied to fastlane/screenshots/en-US/iPhone 6.9-inch/"
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 2. Upload existing screenshots to App Store Connect (no re-build needed)
+  # ─────────────────────────────────────────────────────────────────────────────
+  lane :upload_screenshots do
+    deliver(
+      screenshots_path:      "./fastlane/screenshots",
+      skip_metadata:         true,
+      skip_app_version_update: true,
+      submit_for_review:     false,
+      force:                 true,   # skip HTML preview prompt
+      overwrite_screenshots: true
+    )
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 3. Capture + upload in one go
+  # ─────────────────────────────────────────────────────────────────────────────
+  lane :screenshots do
+    capture
+    upload_screenshots
+  end
+
+end
