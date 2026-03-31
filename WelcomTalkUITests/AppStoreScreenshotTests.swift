@@ -11,6 +11,16 @@ final class AppStoreScreenshotTests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication(bundleIdentifier: "com.waelio.Welcom")
         app.launchArguments = ["UI_TESTING"]
+
+        // Auto-dismiss any system permission dialogs (microphone, camera, speech)
+        addUIInterruptionMonitor(withDescription: "System permission dialog") { alert in
+            let allow = alert.buttons.matching(
+                NSPredicate(format: "label IN {'Allow', 'OK', 'Allow While Using App'}")
+            ).firstMatch
+            if allow.exists { allow.tap(); return true }
+            return false
+        }
+
         app.launch()
     }
 
