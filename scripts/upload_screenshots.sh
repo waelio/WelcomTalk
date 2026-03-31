@@ -2,58 +2,50 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # upload_screenshots.sh  –  Upload App Store screenshots in one command
 #
-# SETUP (one-time):
-#   1. In App Store Connect → Users and Access → Integrations → App Store Connect API
-#      create a key with "App Manager" role.
-#   2. Download the .p8 file and note the Key ID and Issuer ID.
-#   3. Fill in the three variables below (or export them as env vars).
+# ONE-TIME SETUP:
+#   1. Go to https://appleid.apple.com → Sign-In and Security → App-Specific Passwords
+#   2. Generate a password, copy it (looks like: xxxx-xxxx-xxxx-xxxx)
+#   3. Run these two lines once in your terminal, then run this script:
+#        export FASTLANE_USER="your@apple.id"
+#        export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_STORE_CONNECT_API_KEY_ID="${APP_STORE_CONNECT_API_KEY_ID:-}"
-APP_STORE_CONNECT_API_KEY_ISSUER_ID="${APP_STORE_CONNECT_API_KEY_ISSUER_ID:-}"
-APP_STORE_CONNECT_API_KEY_PATH="${APP_STORE_CONNECT_API_KEY_PATH:-}"   # path to .p8 file
-
-if [[ -z "$APP_STORE_CONNECT_API_KEY_ID" || -z "$APP_STORE_CONNECT_API_KEY_ISSUER_ID" || -z "$APP_STORE_CONNECT_API_KEY_PATH" ]]; then
+if [[ -z "$FASTLANE_USER" || -z "$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" ]]; then
   echo ""
-  echo "ERROR: App Store Connect API key not configured."
+  echo "Two env vars needed (run once, then re-run this script):"
   echo ""
-  echo "Set these three environment variables (or edit this script):"
-  echo "  export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX"
-  echo "  export APP_STORE_CONNECT_API_KEY_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-  echo "  export APP_STORE_CONNECT_API_KEY_PATH=/path/to/AuthKey_XXXXXXXXXX.p8"
+  echo "  export FASTLANE_USER=\"your@apple.id\""
+  echo "  export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=\"xxxx-xxxx-xxxx-xxxx\""
   echo ""
-  echo "Get them at: https://appstoreconnect.apple.com/access/integrations/api"
+  echo "Get an app-specific password at: https://appleid.apple.com"
+  echo "  → Sign-In and Security → App-Specific Passwords"
   exit 1
 fi
 
-cd "$(dirname "$0")"
-
-# Write a temporary api_key JSON that fastlane deliver consumes
-API_KEY_JSON=$(mktemp /tmp/asc_api_key.XXXXXX.json)
-cat > "$API_KEY_JSON" <<JSON
-{
-  "key_id":        "$APP_STORE_CONNECT_API_KEY_ID",
-  "issuer_id":     "$APP_STORE_CONNECT_API_KEY_ISSUER_ID",
-  "key_filepath":  "$APP_STORE_CONNECT_API_KEY_PATH",
-  "in_house":      false
-}
-JSON
+# Copy latest screenshots into the fastlane folder
+SS_DIR="$(dirname "$0")/../fastlane/screenshots/en-US/iPhone 6.9-inch"
+mkdir -p "$SS_DIR"
+cp /tmp/screenshots/*.png "$SS_DIR/" 2>/dev/null || true
 
 echo "=== Uploading screenshots to App Store Connect ==="
 echo "App  : com.waelio.Welcom (Safe Talk)"
-echo "Slot : iPhone 6.9-inch  •  Language: en-US"
+echo "Slot : iPhone 6.9-inch  •  en-US"
 echo ""
 
-fastlane upload_screenshots api_key_path:"$API_KEY_JSON"
+cd "$(dirname "$0")/.."
 
-STATUS=$?
-rm -f "$API_KEY_JSON"
+fastlane deliver \
+  --screenshots_path "./fastlane/screenshots" \
+  --skip_metadata \
+  --skip_binary_upload \
+  --overwrite_screenshots \
+  --force
 
-if [[ $STATUS -eq 0 ]]; then
+if [[ $? -eq 0 ]]; then
   echo ""
-  echo "Done! Check App Store Connect to confirm screenshots are live."
+  echo "Done! Screenshots are live on App Store Connect."
 else
   echo ""
-  echo "Upload failed. Check fastlane output above for details."
-  exit $STATUS
+  echo "Upload failed — check output above."
+  exit 1
 fi
