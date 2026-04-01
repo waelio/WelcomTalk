@@ -20,6 +20,7 @@ platform :ios do
   # ─────────────────────────────────────────────────────────────────────────────
   lane :upload_screenshots do
     deliver(
+      app:                     "6760943395",
       screenshots_path:        "./fastlane/screenshots",
       skip_metadata:           true,
       skip_app_version_update: true,
@@ -43,6 +44,7 @@ platform :ios do
   # ─────────────────────────────────────────────────────────────────────────────
   lane :upload_metadata do
     deliver(
+      app:                     "6760943395",
       metadata_path:           "./fastlane/metadata",
       screenshots_path:        "./fastlane/screenshots",
       skip_binary_upload:      true,
