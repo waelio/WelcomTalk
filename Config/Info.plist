@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Safe Talk</string>
+	<string>WelcomTalk</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -33,15 +33,15 @@
 	<key>NSCameraUsageDescription</key>
 	<string>We need camera access to scan QR codes for joining negotiation sessions</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Safe Talk connects directly with the other participant's iPhone over your local network — no internet required.</string>
+	<string>WelcomTalk connects directly with the other participant's iPhone over your local network — no internet required.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Safe Talk uses your microphone to transcribe your speaking turn so both parties can review a written record of the conversation.</string>
+	<string>WelcomTalk uses your microphone to transcribe your speaking turn so both parties can review a written record of the conversation.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Safe Talk transcribes each participant's speaking turn to produce a complete session log of the conversation.</string>
+	<string>WelcomTalk transcribes each participant's speaking turn to produce a complete session log of the conversation.</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
-	<string>Safe Talk adds agreed meeting times to your calendar so both parties remember the next session.</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>Safe Talk adds agreed meeting times to your calendar so both parties remember the next session.</string>
+<string>WelcomTalk adds agreed meeting times to your calendar so both parties remember the next session.</string>
+		<key>NSCalendarsUsageDescription</key>
+		<string>WelcomTalk adds agreed meeting times to your calendar so both parties remember the next session.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
