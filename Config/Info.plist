@@ -42,6 +42,8 @@
 <string>WelcomTalk adds agreed meeting times to your calendar so both parties remember the next session.</string>
 		<key>NSCalendarsUsageDescription</key>
 		<string>WelcomTalk adds agreed meeting times to your calendar so both parties remember the next session.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
