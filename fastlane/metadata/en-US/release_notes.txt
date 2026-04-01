@@ -1,0 +1,3 @@
+Initial release of WelcomTalk.
+
+Have difficult conversations without interruptions — structured, turn-based communication for two people, with no internet required.

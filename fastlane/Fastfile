@@ -20,12 +20,12 @@ platform :ios do
   # ─────────────────────────────────────────────────────────────────────────────
   lane :upload_screenshots do
     deliver(
-      screenshots_path:      "./fastlane/screenshots",
-      skip_metadata:         true,
+      screenshots_path:        "./fastlane/screenshots",
+      skip_metadata:           true,
       skip_app_version_update: true,
-      submit_for_review:     false,
-      force:                 true,   # skip HTML preview prompt
-      overwrite_screenshots: true
+      submit_for_review:       false,
+      force:                   true,
+      overwrite_screenshots:   true
     )
   end
 
@@ -35,6 +35,22 @@ platform :ios do
   lane :screenshots do
     capture
     upload_screenshots
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 4. Upload metadata (name, description, keywords, URLs, release notes)
+  #    and screenshots together — does NOT submit for review
+  # ─────────────────────────────────────────────────────────────────────────────
+  lane :upload_metadata do
+    deliver(
+      metadata_path:           "./fastlane/metadata",
+      screenshots_path:        "./fastlane/screenshots",
+      skip_binary_upload:      true,
+      skip_app_version_update: true,
+      submit_for_review:       false,
+      force:                   true,
+      overwrite_screenshots:   true
+    )
   end
 
 end
