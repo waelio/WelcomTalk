@@ -1,0 +1,29 @@
+WelcomTalk helps two people have difficult conversations without interruptions, raised voices, or talking over each other.
+
+One person speaks at a time. When your turn ends, the other person's turn begins — automatically. No buttons to fight over. No muting wars.
+
+HOW IT WORKS
+• Start a session and share a 6-character code with the other person via AirDrop, QR code, or NFC tap
+• Both phones sync instantly — no internet required
+• A visible countdown timer shows exactly how long each person has to speak
+• When your turn is active your microphone is live; when it's not, you're muted
+• Private notes let you jot thoughts while the other person speaks, without interrupting
+• A full session log records every turn for review after the conversation ends
+• Rate the conversation quality when you're done
+
+GREAT FOR
+• Couples working through disagreements
+• Family discussions that tend to escalate
+• Workplace conflict resolution
+• Mediation and therapy sessions
+• Any conversation that needs structure and fairness
+
+FEATURES
+• Turn-based audio with automatic mute enforcement
+• Configurable turn duration and number of rounds
+• Real-time countdown timer with visual progress ring
+• Private per-turn notes
+• Complete session transcript and log export
+• Post-session respectfulness rating
+• Peer-to-peer connection — AirDrop, QR code, NFC, or manual code
+• No account, no subscription, no internet required
