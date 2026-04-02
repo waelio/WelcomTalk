@@ -9,7 +9,7 @@ platform :ios do
     sh("bash /tmp/take_screenshots.sh")
     # Sync the freshly-captured files into the fastlane folder
     Dir.glob("/tmp/screenshots/*.png").each do |f|
-      dest = File.join(File.dirname(__FILE__), "screenshots/en-US/iPhone 6.9-inch/#{File.basename(f)}")
+      dest = File.join(File.dirname(__FILE__), "screenshots/en-US/iPhone 6.5-inch/#{File.basename(f)}")
       FileUtils.cp(f, dest)
     end
     UI.success "Screenshots copied to fastlane/screenshots/en-US/iPhone 6.9-inch/"
@@ -20,7 +20,7 @@ platform :ios do
   # ─────────────────────────────────────────────────────────────────────────────
   lane :upload_screenshots do
     deliver(
-      app:                     "6760943395",
+      app:                     "6761300696",
       screenshots_path:        "./fastlane/screenshots",
       skip_metadata:           true,
       skip_app_version_update: true,
@@ -44,7 +44,7 @@ platform :ios do
   # ─────────────────────────────────────────────────────────────────────────────
   lane :upload_metadata do
     deliver(
-      app:                     "6760943395",
+      app:                     "6761300696",
       metadata_path:           "./fastlane/metadata",
       screenshots_path:        "./fastlane/screenshots",
       skip_binary_upload:      true,

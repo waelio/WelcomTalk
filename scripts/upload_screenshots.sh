@@ -23,13 +23,13 @@ if [[ -z "$FASTLANE_USER" || -z "$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" 
 fi
 
 # Copy latest screenshots into the fastlane folder
-SS_DIR="$(dirname "$0")/../fastlane/screenshots/en-US/iPhone 6.9-inch"
+SS_DIR="$(dirname "$0")/../fastlane/screenshots/en-US/iPhone 6.5-inch"
 mkdir -p "$SS_DIR"
 cp /tmp/screenshots/*.png "$SS_DIR/" 2>/dev/null || true
 
 echo "=== Uploading screenshots to App Store Connect ==="
 echo "App  : com.waelio.Welcom (Safe Talk)"
-echo "Slot : iPhone 6.9-inch  •  en-US"
+echo "Slot : iPhone 6.5-inch  •  en-US"
 echo ""
 
 cd "$(dirname "$0")/.."
