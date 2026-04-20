@@ -22,10 +22,54 @@ struct WaitingRoomView: View {
                     DetailRow(icon: "person.fill",         title: "Host",          value: sessionViewModel.session?.partyAName ?? "You")
                     DetailRow(icon: "timer",               title: "Time per turn", value: timeString(from: sessionViewModel.session?.turnDuration ?? 120))
                     DetailRow(icon: "arrow.left.arrow.right", title: "Rounds", value: "\(sessionViewModel.session?.maxTurns ?? 2) each  (\(sessionViewModel.session?.totalTurns ?? 4) total)")
+                    if let communicationMode = sessionViewModel.session?.caseFile?.communicationMode {
+                        DetailRow(icon: communicationMode.symbolName, title: "Mode", value: communicationMode.displayName)
+                    }
                 }
                 .padding(20)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.1)))
                 .padding(.horizontal, 20)
+
+                if let caseFile = sessionViewModel.session?.caseFile {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Documented Case File")
+                            .font(.headline)
+
+                        Text(caseFile.claimText)
+                            .font(.subheadline)
+
+                        if !caseFile.requestedOutcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Text("Requested outcome: \(caseFile.requestedOutcome)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        if !caseFile.evidenceItems.isEmpty {
+                            Divider()
+                            ForEach(caseFile.evidenceItems) { evidence in
+                                HStack(alignment: .top, spacing: 10) {
+                                    Image(systemName: evidence.kind.symbolName)
+                                        .foregroundColor(evidence.kind == .document ? .green : .blue)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(evidence.title)
+                                            .font(.subheadline.bold())
+                                        Text(evidence.detail)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        if let fileName = evidence.fileName {
+                                            Text(fileName)
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(20)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue.opacity(0.08)))
+                    .padding(.horizontal, 20)
+                }
 
                 if let errorMessage = sessionViewModel.errorMessage {
                     Text(errorMessage)
@@ -178,7 +222,12 @@ struct WaitingRoomView: View {
 
     private var sessionShareMessage: String {
         let code = sessionViewModel.session?.sessionCode ?? "------"
-        return "Join my WelcomTalk conversation!\n\nOpen the app, tap \"Join Conversation\" and enter this code: \(code)"
+        let claimSnippet = sessionViewModel.session?.caseFile?.claimText ?? ""
+        if claimSnippet.isEmpty {
+            return "Join my WelcomTalk conversation!\n\nOpen the app, tap \"Join Conversation\" and enter this code: \(code)"
+        }
+
+        return "Join my WelcomTalk conversation!\n\nClaim: \(claimSnippet)\n\nOpen the app, tap \"Join Conversation\" and enter this code: \(code)"
     }
 
     private func cancelWaitingSession() {

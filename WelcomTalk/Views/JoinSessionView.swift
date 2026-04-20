@@ -220,6 +220,7 @@ struct JoinSessionView: View {
                 turnDuration: 120,
                 partyAId: "pending-host",
                 partyBId: userId,
+                partyBName: userName,
                 turnStartedAt: nil
             )
             

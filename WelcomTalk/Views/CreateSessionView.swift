@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreNFC
+import UniformTypeIdentifiers
 
 struct CreateSessionView: View {
     private enum Field {
@@ -11,6 +12,14 @@ struct CreateSessionView: View {
     @StateObject private var nfcManager = NFCSessionManager()
     @State private var sessionTitle: String = ""
     @State private var userName: String = ""
+    @State private var claimText: String = ""
+    @State private var requestedOutcome: String = ""
+    @State private var communicationMode: SessionCaseFile.CommunicationMode = .structuredConversation
+    @State private var evidenceTitle: String = ""
+    @State private var evidenceDetail: String = ""
+    @State private var evidenceItems: [DraftEvidenceItem] = []
+    @State private var showingDocumentImporter = false
+    @State private var documentImportError: String?
     /// Rounds per party. Total turn count = maxTurns × 2. Default: 2 rounds each (4 total).
     @State private var maxTurns: Int = 2
     /// Speaking time per turn in seconds. Default: 30 seconds.
@@ -41,8 +50,8 @@ struct CreateSessionView: View {
                     }
                     
                     Picker("Time Per Turn", selection: $turnDuration) {
-                        Text("30 seconds  (quick)").tag(TimeInterval(30))
-                        Text("45 seconds").tag(TimeInterval(45))
+                        Text("30 seconds  (quick reply)").tag(TimeInterval(30))
+                        Text("45 seconds  (standard reply)").tag(TimeInterval(45))
                         Text("50 seconds").tag(TimeInterval(50))
                         Text("1 minute").tag(TimeInterval(60))
                         Text("2 minutes").tag(TimeInterval(120))
@@ -50,14 +59,81 @@ struct CreateSessionView: View {
                         Text("5 minutes").tag(TimeInterval(300))
                     }
                 }
+
+                Section("Claim & Evidence") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Opening claim")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        TextEditor(text: $claimText)
+                            .frame(minHeight: 110)
+                    }
+
+                    TextField("Requested outcome or resolution", text: $requestedOutcome)
+                        .textContentType(.none)
+
+                    Picker("Communication Mode", selection: $communicationMode) {
+                        ForEach(SessionCaseFile.CommunicationMode.allCases, id: \.self) { mode in
+                            Label(mode.displayName, systemImage: mode.symbolName)
+                                .tag(mode)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Add text evidence")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        TextField("Evidence title", text: $evidenceTitle)
+                            .textContentType(.none)
+
+                        TextField("What does it prove?", text: $evidenceDetail)
+                            .textContentType(.none)
+
+                        Button {
+                            addTextEvidence()
+                        } label: {
+                            Label("Add Text Evidence", systemImage: "plus.circle.fill")
+                        }
+                        .disabled(trimmed(evidenceTitle).isEmpty && trimmed(evidenceDetail).isEmpty)
+                    }
+
+                    Button {
+                        showingDocumentImporter = true
+                    } label: {
+                        Label("Import Document Evidence", systemImage: "doc.badge.plus")
+                    }
+
+                    Text(communicationMode.documentationNote)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    if let documentImportError {
+                        Text(documentImportError)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+
+                    if evidenceItems.isEmpty {
+                        Text("Add at least one supporting text note or document before starting the session.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(evidenceItems) { item in
+                            EvidenceDraftRow(item: item)
+                        }
+                        .onDelete(perform: removeEvidence)
+                    }
+                }
                 
                 Section("How It Works") {
                     VStack(alignment: .leading, spacing: 8) {
-                        InstructionRow(icon: "timer", color: .blue, text: "Both people get equal, timed turns to speak")
-                        InstructionRow(icon: "mic.slash", color: .red, text: "Only one person can talk at a time - no interruptions")
-                        InstructionRow(icon: "square.and.arrow.up", color: .blue, text: "This phone shares the first code")
-                        InstructionRow(icon: "person.wave.2.fill", color: .green, text: "When the other phone joins, tap \"Let Them In\" to approve them")
-                        InstructionRow(icon: "play.circle.fill", color: .orange, text: "Both countdowns start immediately once you approve")
+                        InstructionRow(icon: "text.quote", color: .blue, text: "The initiator files the opening claim and supporting evidence before the session begins")
+                        InstructionRow(icon: "timer", color: .blue, text: "Each side gets equal, timed reply windows once the session starts")
+                        InstructionRow(icon: "mic.slash", color: .red, text: "Only one person can speak at a time — no interruptions")
+                        InstructionRow(icon: "square.and.arrow.up", color: .blue, text: "This phone shares the code and documented case file")
+                        InstructionRow(icon: "doc.text.fill", color: .green, text: "Claims, evidence, selected communication mode, notes, and transcripts are all logged for export")
                     }
                 }
                 
@@ -72,7 +148,7 @@ struct CreateSessionView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.blue)
-                    .disabled(sessionTitle.isEmpty || userName.isEmpty)
+                    .disabled(!canCreateSession)
                 }
             }
             .scrollDismissesKeyboard(.immediately)
@@ -96,17 +172,45 @@ struct CreateSessionView: View {
                     ))
                 }
             }
+            .fileImporter(
+                isPresented: $showingDocumentImporter,
+                allowedContentTypes: [.item],
+                allowsMultipleSelection: true,
+                onCompletion: importDocuments
+            )
         }
+    }
+
+    private var canCreateSession: Bool {
+        !trimmed(sessionTitle).isEmpty
+            && !trimmed(userName).isEmpty
+            && !trimmed(claimText).isEmpty
+            && !evidenceItems.isEmpty
     }
     
     private func createSession() {
         dismissKeyboard()
         let userId = UUID().uuidString
         let sessionCode = SessionViewModel.generateCode()
+        let caseFile = SessionCaseFile(
+            claimText: trimmed(claimText),
+            requestedOutcome: trimmed(requestedOutcome),
+            communicationMode: communicationMode,
+            evidenceItems: evidenceItems.map {
+                SessionEvidence(
+                    title: $0.title,
+                    detail: $0.detail,
+                    kind: $0.kind,
+                    fileName: $0.fileName,
+                    addedByUserId: userId
+                )
+            }
+        )
         
         let session = Session(
             title: sessionTitle,
             sessionCode: sessionCode,
+            caseFile: caseFile,
             status: .waiting,
             currentTurn: .partyA,
             currentTurnNumber: 1,
@@ -114,14 +218,96 @@ struct CreateSessionView: View {
             turnDuration: turnDuration,
             partyAId: userId,
             partyBId: "",
+            partyAName: userName,
             turnStartedAt: nil
         )
         
         createdSession = session
     }
+
+    private func addTextEvidence() {
+        let title = trimmed(evidenceTitle)
+        let detail = trimmed(evidenceDetail)
+
+        guard !title.isEmpty || !detail.isEmpty else { return }
+
+        evidenceItems.append(
+            DraftEvidenceItem(
+                title: title.isEmpty ? "Supporting statement" : title,
+                detail: detail.isEmpty ? "Text evidence submitted by the initiator." : detail,
+                kind: .text,
+                fileName: nil
+            )
+        )
+
+        evidenceTitle = ""
+        evidenceDetail = ""
+        documentImportError = nil
+    }
+
+    private func importDocuments(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            let newItems = urls.map { url in
+                DraftEvidenceItem(
+                    title: url.deletingPathExtension().lastPathComponent,
+                    detail: "Imported as supporting document evidence.",
+                    kind: .document,
+                    fileName: url.lastPathComponent
+                )
+            }
+            evidenceItems.append(contentsOf: newItems)
+            documentImportError = nil
+
+        case .failure(let error):
+            documentImportError = error.localizedDescription
+        }
+    }
+
+    private func removeEvidence(at offsets: IndexSet) {
+        evidenceItems.remove(atOffsets: offsets)
+    }
+
+    private func trimmed(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
     
     private func dismissKeyboard() {
         focusedField = nil
+    }
+}
+
+private struct DraftEvidenceItem: Identifiable {
+    let id = UUID().uuidString
+    let title: String
+    let detail: String
+    let kind: SessionEvidence.Kind
+    let fileName: String?
+}
+
+private struct EvidenceDraftRow: View {
+    let item: DraftEvidenceItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: item.kind.symbolName)
+                    .foregroundColor(item.kind == .document ? .green : .blue)
+                Text(item.title)
+                    .font(.subheadline.bold())
+            }
+
+            Text(item.detail)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            if let fileName = item.fileName {
+                Text(fileName)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

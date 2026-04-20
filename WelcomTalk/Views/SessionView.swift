@@ -62,6 +62,23 @@ struct SessionView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 4)
                 }
+
+                if let caseFile = sessionViewModel.session?.caseFile {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Filed claim")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(caseFile.claimText)
+                            .font(.subheadline)
+                            .multilineTextAlignment(.leading)
+                        Text(caseFile.communicationMode.displayName)
+                            .font(.caption.bold())
+                            .foregroundColor(.blue)
+                    }
+                    .padding()
+                    .background(Color.blue.opacity(0.08))
+                    .cornerRadius(12)
+                }
             }
 
             ProgressView()
@@ -91,6 +108,11 @@ struct SessionView: View {
                 VStack(spacing: 20) {
                     // Timer Section
                     timerSection
+
+                    // Case file
+                    if sessionViewModel.session?.caseFile != nil {
+                        caseFileSection
+                    }
                     
                     // Party Status
                     partyStatusSection
@@ -338,6 +360,60 @@ struct SessionView: View {
             )
         }
     }
+
+    private var caseFileSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let caseFile = sessionViewModel.session?.caseFile {
+                HStack(spacing: 8) {
+                    Image(systemName: caseFile.communicationMode.symbolName)
+                        .foregroundColor(.blue)
+                    Text("Documented Case File")
+                        .font(.headline)
+                    Spacer()
+                    Text(caseFile.communicationMode.displayName)
+                        .font(.caption.bold())
+                        .foregroundColor(.blue)
+                }
+
+                Text(caseFile.claimText)
+                    .font(.body)
+
+                if !caseFile.requestedOutcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("Requested outcome: \(caseFile.requestedOutcome)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                if !caseFile.evidenceItems.isEmpty {
+                    Divider()
+
+                    ForEach(caseFile.evidenceItems) { evidence in
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: evidence.kind.symbolName)
+                                .foregroundColor(evidence.kind == .document ? .green : .blue)
+                                .padding(.top, 2)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(evidence.title)
+                                    .font(.subheadline.bold())
+                                Text(evidence.detail)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                if let fileName = evidence.fileName {
+                                    Text(fileName)
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color.blue.opacity(0.05))
+        .cornerRadius(12)
+    }
     
     private func partyStatusCard(party: Session.TurnParty, isActive: Bool, isMe: Bool) -> some View {
         let name = sessionViewModel.session?.name(for: party) ?? party.displayName
@@ -529,6 +605,10 @@ struct SessionView: View {
     
     private func logTypeColor(_ type: LogEntry.LogType) -> Color {
         switch type {
+        case .claimRecorded: return .indigo
+        case .communicationModeSelected: return .blue
+        case .evidenceAdded: return .teal
+        case .documentAttached: return .green
         case .turnStarted: return .blue
         case .turnEnded: return .blue.opacity(0.5)
         case .turnTranscription: return .teal
