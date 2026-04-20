@@ -45,6 +45,7 @@ class SessionViewModel: ObservableObject {
     var displayName: String { userName }
     private let userName: String
     private let isHost: Bool
+    private var hasDocumentedCaseFile = false
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
@@ -89,6 +90,8 @@ class SessionViewModel: ObservableObject {
             } else {
                 addLogEntry(type: .userJoined, message: "\(userName) joined session")
             }
+
+            documentCaseFileIfNeeded()
 
             enableMultipeerSync()
         } else {
@@ -383,10 +386,63 @@ class SessionViewModel: ObservableObject {
         
         logEntries.insert(entry, at: 0)
     }
+
+    private func documentCaseFileIfNeeded() {
+        guard !hasDocumentedCaseFile,
+              let session,
+              let caseFile = session.caseFile else {
+            return
+        }
+
+        hasDocumentedCaseFile = true
+
+        addLogEntry(type: .claimRecorded, message: "Claim filed: \(caseFile.claimText)")
+
+        if !caseFile.requestedOutcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            addLogEntry(type: .claimRecorded, message: "Requested outcome: \(caseFile.requestedOutcome)")
+        }
+
+        addLogEntry(
+            type: .communicationModeSelected,
+            message: "Communication mode: \(caseFile.communicationMode.displayName)"
+        )
+
+        for evidence in caseFile.evidenceItems {
+            addLogEntry(
+                type: evidence.kind == .document ? .documentAttached : .evidenceAdded,
+                message: evidence.documentationLine
+            )
+        }
+    }
     
     func exportLog() -> URL? {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
+
+        let sessionHeader = session.map { session in
+            var lines = [
+                "Session: \(session.title)",
+                "Code: \(session.sessionCode)",
+                "Participants: \(session.partyAName) vs \(session.partyBName)",
+            ]
+
+            if let caseFile = session.caseFile {
+                lines.append("Claim: \(caseFile.claimText)")
+                if !caseFile.requestedOutcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    lines.append("Requested outcome: \(caseFile.requestedOutcome)")
+                }
+                lines.append("Communication mode: \(caseFile.communicationMode.displayName)")
+                lines.append("Evidence:")
+
+                if caseFile.evidenceItems.isEmpty {
+                    lines.append("- None provided")
+                } else {
+                    lines.append(contentsOf: caseFile.evidenceItems.map { "- \($0.documentationLine)" })
+                }
+            }
+
+            return lines.joined(separator: "\n")
+        } ?? ""
 
         let logText = logEntries.reversed().map { entry in
             let time = formatter.string(from: entry.timestamp)
@@ -396,12 +452,16 @@ class SessionViewModel: ObservableObject {
             return "[\(time)] \(entry.type.rawValue): \(entry.message)"
         }.joined(separator: "\n")
 
+        let reportText = [sessionHeader, "Timeline", logText]
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n\n")
+
         let tempDir = FileManager.default.temporaryDirectory
         let fileName = "session_log_\(Date().timeIntervalSince1970).txt"
         let fileURL = tempDir.appendingPathComponent(fileName)
 
         do {
-            try logText.write(to: fileURL, atomically: true, encoding: .utf8)
+            try reportText.write(to: fileURL, atomically: true, encoding: .utf8)
             return fileURL
         } catch {
             errorMessage = "Failed to export log: \(error.localizedDescription)"
@@ -419,6 +479,26 @@ class SessionViewModel: ObservableObject {
         let session = Session(
             title: "Finding More Time Together",
             sessionCode: "DEMO42",
+            caseFile: SessionCaseFile(
+                claimText: "We need a calmer, evidence-based way to talk about the time we keep losing together.",
+                requestedOutcome: "Agree on a realistic weekly plan with protected time together.",
+                communicationMode: .structuredConversation,
+                evidenceItems: [
+                    SessionEvidence(
+                        title: "Calendar conflicts",
+                        detail: "Notes from the last three weeks showing repeated schedule clashes.",
+                        kind: .text,
+                        addedByUserId: currentUserId
+                    ),
+                    SessionEvidence(
+                        title: "Cancelled date receipt",
+                        detail: "Proof of the evening we had to postpone and want to reschedule.",
+                        kind: .document,
+                        fileName: "reservation.pdf",
+                        addedByUserId: currentUserId
+                    ),
+                ]
+            ),
             status: .active,
             currentTurn: .partyB,       // Sam's turn is live
             currentTurnNumber: 4,
@@ -593,6 +673,8 @@ class SessionViewModel: ObservableObject {
             type: .userJoined,
             message: "\(pendingParticipantName ?? "Someone") wants to join"
         )
+
+        broadcastCurrentSessionState()
     }
 
     /// Host taps "Let them in" — starts the session immediately on both devices.
@@ -600,14 +682,16 @@ class SessionViewModel: ObservableObject {
         guard let participantId = pendingParticipantId else { return }
         guard var session = session, session.status == .waiting else { return }
 
+        let participantLabel = pendingParticipantName ?? "Party B"
+
         session.partyBId = participantId
+        session.partyBName = participantLabel
         session.status = .active
         session.turnStartedAt = Date()
         self.session = session
         self.timeRemaining = session.turnDuration
         errorMessage = nil
 
-        let participantLabel = pendingParticipantName ?? "Party B"
         clearPendingParticipantHandshake()
         addLogEntry(type: .userJoined, message: "\(participantLabel) joined the session")
         addLogEntry(type: .turnStarted, message: "\(session.currentTurn.displayName) turn started")
@@ -637,6 +721,9 @@ class SessionViewModel: ObservableObject {
         session.turnDuration = remoteSession.turnDuration
         session.partyAId = remoteSession.partyAId
         session.partyBId = remoteSession.partyBId
+        session.partyAName = remoteSession.partyAName
+        session.partyBName = remoteSession.partyBName
+        session.caseFile = remoteSession.caseFile
 
         if session.partyBId.isEmpty && !isHost {
             session.partyBId = currentUserId
@@ -656,6 +743,8 @@ class SessionViewModel: ObservableObject {
             myParty = (session.partyAId == currentUserId) ? .partyA : .partyB
         }
 
+        documentCaseFileIfNeeded()
+
         timer?.invalidate()
         timer = nil
     }
@@ -674,6 +763,9 @@ class SessionViewModel: ObservableObject {
             status: session.status.rawValue,
             partyAId: session.partyAId,
             partyBId: session.partyBId,
+            partyAName: session.partyAName,
+            partyBName: session.partyBName,
+            caseFile: session.caseFile,
             graceTimeRemaining: graceTimeRemaining,
             isInGracePeriod: isInGracePeriod
         )
@@ -684,6 +776,7 @@ class SessionViewModel: ObservableObject {
         
         // Simulate Party B joining
         session.partyBId = "participant-\(UUID().uuidString)"
+        session.partyBName = "Demo Participant"
         session.status = .active
         session.turnStartedAt = Date()
         
