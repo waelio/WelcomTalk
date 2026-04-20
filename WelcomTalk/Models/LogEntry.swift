@@ -11,6 +11,10 @@ public struct LogEntry: Identifiable, Codable {
     public enum LogType: String, Codable {
         case sessionStarted
         case sessionEnded
+        case claimRecorded
+        case communicationModeSelected
+        case evidenceAdded
+        case documentAttached
         case turnStarted
         case turnEnded
         case turnTranscription

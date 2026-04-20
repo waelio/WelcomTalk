@@ -32,6 +32,7 @@ let package = Package(
             ],
             sources: [
                 "Models/Session.swift",
+                "Models/SessionCaseFile.swift",
                 "Models/Note.swift",
                 "Models/LogEntry.swift",
                 "Models/ModificationRequest.swift",
@@ -40,6 +41,10 @@ let package = Package(
                 "Models/ScheduledMeeting.swift",
                 "ViewModels/SessionSummaryViewModel.swift",
             ]
+        ),
+        .testTarget(
+            name: "WelcomSharedTests",
+            dependencies: ["WelcomShared"]
         ),
     ]
 )

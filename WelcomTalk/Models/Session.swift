@@ -6,6 +6,7 @@ public struct Session: Identifiable, Codable {
     public let id: String
     public var title: String
     public var sessionCode: String
+    public var caseFile: SessionCaseFile?
     public var status: SessionStatus
     public var currentTurn: TurnParty
     public var currentTurnNumber: Int
@@ -50,6 +51,7 @@ public struct Session: Identifiable, Codable {
     public init(id: String = UUID().uuidString,
                 title: String,
                 sessionCode: String,
+                caseFile: SessionCaseFile? = nil,
                 status: SessionStatus = .waiting,
                 currentTurn: TurnParty = .partyA,
                 currentTurnNumber: Int = 1,
@@ -64,6 +66,7 @@ public struct Session: Identifiable, Codable {
         self.id = id
         self.title = title
         self.sessionCode = sessionCode
+        self.caseFile = caseFile
         self.status = status
         self.currentTurn = currentTurn
         self.currentTurnNumber = currentTurnNumber

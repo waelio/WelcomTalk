@@ -96,6 +96,9 @@ class MultipeerService: NSObject, ObservableObject {
         status: String,
         partyAId: String,
         partyBId: String,
+        partyAName: String,
+        partyBName: String,
+        caseFile: SessionCaseFile?,
         graceTimeRemaining: Double,
         isInGracePeriod: Bool
     ) {
@@ -109,6 +112,9 @@ class MultipeerService: NSObject, ObservableObject {
             status: status,
             partyAId: partyAId,
             partyBId: partyBId,
+            partyAName: partyAName,
+            partyBName: partyBName,
+            caseFile: caseFile,
             graceTimeRemaining: graceTimeRemaining,
             isInGracePeriod: isInGracePeriod
         )
