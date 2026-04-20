@@ -1,17 +1,17 @@
 import Foundation
 
-struct SessionRating: Codable, Identifiable {
-    let id: String
-    let sessionId: String
-    let userId: String
-    let overallRating: Int // 1-5 stars
-    let respectfulnessRating: Int // 1-5 stars
-    let agreementReached: Bool
-    let wouldNegotiateAgain: Bool
-    let feedback: String?
-    let createdAt: Date
+public struct SessionRating: Codable, Identifiable {
+    public let id: String
+    public let sessionId: String
+    public let userId: String
+    public let overallRating: Int // 1-5 stars
+    public let respectfulnessRating: Int // 1-5 stars
+    public let agreementReached: Bool
+    public let wouldNegotiateAgain: Bool
+    public let feedback: String?
+    public let createdAt: Date
     
-    init(
+    public init(
         id: String = UUID().uuidString,
         sessionId: String,
         userId: String,

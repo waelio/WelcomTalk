@@ -5,15 +5,15 @@ import Foundation
 /// Proposals are sent over Multipeer as a JSON-encoded payload inside a `"schedule-proposal"` command.
 /// When the other party accepts, a `"schedule-confirmed"` command fires back and both devices
 /// add the event to their iOS Calendar via EventKit.
-struct ScheduledMeeting: Identifiable, Codable {
-    let id: String
-    var title: String
-    var scheduledDate: Date
-    var durationMinutes: Int
-    var proposedByUserId: String
-    var proposedByName: String
+public struct ScheduledMeeting: Identifiable, Codable {
+    public let id: String
+    public var title: String
+    public var scheduledDate: Date
+    public var durationMinutes: Int
+    public var proposedByUserId: String
+    public var proposedByName: String
 
-    init(
+    public init(
         id: String = UUID().uuidString,
         title: String,
         scheduledDate: Date,
@@ -29,15 +29,15 @@ struct ScheduledMeeting: Identifiable, Codable {
         self.proposedByName = proposedByName
     }
 
-    var endDate: Date {
+    public var endDate: Date {
         scheduledDate.addingTimeInterval(TimeInterval(durationMinutes * 60))
     }
 
-    var formattedDateTime: String {
+    public var formattedDateTime: String {
         scheduledDate.formatted(date: .abbreviated, time: .shortened)
     }
 
-    var formattedDuration: String {
+    public var formattedDuration: String {
         durationMinutes < 60
             ? "\(durationMinutes) min"
             : durationMinutes == 60
@@ -47,7 +47,7 @@ struct ScheduledMeeting: Identifiable, Codable {
 
     // MARK: - Multipeer payload encoding
 
-    func encodePayload() -> String? {
+    public func encodePayload() -> String? {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(self),
@@ -55,7 +55,7 @@ struct ScheduledMeeting: Identifiable, Codable {
         return str
     }
 
-    static func decode(from payload: String) -> ScheduledMeeting? {
+    public static func decode(from payload: String) -> ScheduledMeeting? {
         guard let data = payload.data(using: .utf8) else { return nil }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

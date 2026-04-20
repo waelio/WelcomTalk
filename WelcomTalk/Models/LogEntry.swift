@@ -1,14 +1,14 @@
 import Foundation
 
-struct LogEntry: Identifiable, Codable {
-    let id: String
-    let sessionId: String
-    let type: LogType
-    let message: String
-    let timestamp: Date
-    let metadata: [String: String]?
+public struct LogEntry: Identifiable, Codable {
+    public let id: String
+    public let sessionId: String
+    public let type: LogType
+    public let message: String
+    public let timestamp: Date
+    public let metadata: [String: String]?
     
-    enum LogType: String, Codable {
+    public enum LogType: String, Codable {
         case sessionStarted
         case sessionEnded
         case turnStarted
@@ -24,12 +24,12 @@ struct LogEntry: Identifiable, Codable {
         case userLeft
     }
     
-    init(id: String = UUID().uuidString,
-         sessionId: String,
-         type: LogType,
-         message: String,
-         timestamp: Date = Date(),
-         metadata: [String: String]? = nil) {
+    public init(id: String = UUID().uuidString,
+                sessionId: String,
+                type: LogType,
+                message: String,
+                timestamp: Date = Date(),
+                metadata: [String: String]? = nil) {
         self.id = id
         self.sessionId = sessionId
         self.type = type

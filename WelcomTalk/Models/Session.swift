@@ -2,37 +2,37 @@ import Foundation
 
 /// Represents a single structured conversation session between two parties.
 /// Both parties alternate timed speaking turns; the session ends when all rounds are complete.
-struct Session: Identifiable, Codable {
-    let id: String
-    var title: String
-    var sessionCode: String
-    var status: SessionStatus
-    var currentTurn: TurnParty
-    var currentTurnNumber: Int
+public struct Session: Identifiable, Codable {
+    public let id: String
+    public var title: String
+    public var sessionCode: String
+    public var status: SessionStatus
+    public var currentTurn: TurnParty
+    public var currentTurnNumber: Int
     /// Number of speaking rounds **per party**. Total turns across both parties = `maxTurns × 2`.
-    var maxTurns: Int
+    public var maxTurns: Int
     /// Total turn slots across both parties combined (derived from `maxTurns`).
-    var totalTurns: Int { maxTurns * 2 }
-    var turnDuration: TimeInterval
-    var partyAId: String
-    var partyBId: String
-    var partyAName: String
-    var partyBName: String
-    var createdAt: Date
-    var turnStartedAt: Date?
+    public var totalTurns: Int { maxTurns * 2 }
+    public var turnDuration: TimeInterval
+    public var partyAId: String
+    public var partyBId: String
+    public var partyAName: String
+    public var partyBName: String
+    public var createdAt: Date
+    public var turnStartedAt: Date?
 
-    enum SessionStatus: String, Codable {
+    public enum SessionStatus: String, Codable {
         case waiting
         case active
         case paused
         case completed
     }
 
-    enum TurnParty: String, Codable {
+    public enum TurnParty: String, Codable {
         case partyA
         case partyB
 
-        var displayName: String {
+        public var displayName: String {
             switch self {
             case .partyA: return "Party A"
             case .partyB: return "Party B"
@@ -40,27 +40,27 @@ struct Session: Identifiable, Codable {
         }
     }
 
-    func name(for party: TurnParty) -> String {
+    public func name(for party: TurnParty) -> String {
         switch party {
         case .partyA: return partyAName
         case .partyB: return partyBName
         }
     }
 
-    init(id: String = UUID().uuidString,
-         title: String,
-         sessionCode: String,
-         status: SessionStatus = .waiting,
-         currentTurn: TurnParty = .partyA,
-         currentTurnNumber: Int = 1,
-         maxTurns: Int = 2,
-         turnDuration: TimeInterval = 120,
-         partyAId: String,
-         partyBId: String,
-         partyAName: String = "Party A",
-         partyBName: String = "Party B",
-         createdAt: Date = Date(),
-         turnStartedAt: Date? = nil) {
+    public init(id: String = UUID().uuidString,
+                title: String,
+                sessionCode: String,
+                status: SessionStatus = .waiting,
+                currentTurn: TurnParty = .partyA,
+                currentTurnNumber: Int = 1,
+                maxTurns: Int = 2,
+                turnDuration: TimeInterval = 120,
+                partyAId: String,
+                partyBId: String,
+                partyAName: String = "Party A",
+                partyBName: String = "Party B",
+                createdAt: Date = Date(),
+                turnStartedAt: Date? = nil) {
         self.id = id
         self.title = title
         self.sessionCode = sessionCode
