@@ -26,8 +26,6 @@ import Testing
     let session = Session(
         title: "Billing Dispute",
         sessionCode: "ABC123",
-        partyAId: "host-1",
-        partyBId: "guest-1",
         caseFile: SessionCaseFile(
             claimText: "Incorrect final balance.",
             communicationMode: .structuredConversation,
@@ -39,7 +37,9 @@ import Testing
                     addedByUserId: "host-1"
                 )
             ]
-        )
+        ),
+        partyAId: "host-1",
+        partyBId: "guest-1",
     )
 
     #expect(session.caseFile?.claimText == "Incorrect final balance.")
