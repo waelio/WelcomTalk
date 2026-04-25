@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var showingPortalScanner = false
     @State private var showingMessagingSettings = false
     @State private var scannedPortalCode: String?
-    @State private var importedPortalSession: Session?
+    @State private var importedPortalDraft: PortalSessionImport?
     @State private var portalImportError: String?
     @State private var isImportingPortalSession = false
 
@@ -200,17 +200,11 @@ struct ContentView: View {
                 QRCodeScannerView(scannedCode: $scannedPortalCode)
             }
             .onOpenURL(perform: handleIncomingURL)
-            .fullScreenCover(item: $importedPortalSession) { session in
-                NavigationStack {
-                    SessionView(
-                        sessionViewModel: SessionViewModel(
-                            session: session,
-                            userId: session.partyAId,
-                            userName: session.partyAName,
-                            isHost: true
-                        )
-                    )
-                }
+            .fullScreenCover(item: $importedPortalDraft) { portalImport in
+                CreateSessionView(
+                    initialPortalImport: portalImport,
+                    autoStartOnAppear: true
+                )
             }
         }
     }
@@ -249,10 +243,10 @@ struct ContentView: View {
 
         Task {
             do {
-                let session = try await portalImport.resolveHostedSession()
+                let resolvedPortalImport = try await portalImport.resolvePortalImport()
 
                 await MainActor.run {
-                    importedPortalSession = session
+                    importedPortalDraft = resolvedPortalImport
                     isImportingPortalSession = false
                 }
             } catch {
@@ -265,12 +259,24 @@ struct ContentView: View {
     }
 }
 
-struct PortalSessionImport {
+struct PortalSessionImport: Identifiable {
     let requestId: String?
     let fullName: String
     let topic: String
     let summary: String
     let additionalNotes: String
+    let attachments: [PortalRequestAttachment]
+
+    var id: String {
+        if let requestId,
+           !requestId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return requestId
+        }
+
+        return [fullName, topic, summary, additionalNotes]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .joined(separator: "|")
+    }
 
     static func parse(from code: String) -> PortalSessionImport? {
         let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -313,7 +319,8 @@ struct PortalSessionImport {
             fullName: fullName,
             topic: topic,
             summary: summary,
-            additionalNotes: additionalNotes
+            additionalNotes: additionalNotes,
+            attachments: []
         )
     }
 

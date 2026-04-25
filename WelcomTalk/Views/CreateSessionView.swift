@@ -8,6 +8,9 @@ struct CreateSessionView: View {
         case userName
     }
 
+    let initialPortalImport: PortalSessionImport?
+    let autoStartOnAppear: Bool
+
     @Environment(\.dismiss) var dismiss
     @StateObject private var nfcManager = NFCSessionManager()
     @State private var sessionTitle: String = ""
@@ -25,7 +28,14 @@ struct CreateSessionView: View {
     /// Speaking time per turn in seconds. Default: 30 seconds.
     @State private var turnDuration: TimeInterval = 30
     @State private var createdSession: Session?
+    @State private var hasAppliedInitialPortalImport = false
+    @State private var hasAutoStartedImportedSession = false
     @FocusState private var focusedField: Field?
+
+    init(initialPortalImport: PortalSessionImport? = nil, autoStartOnAppear: Bool = false) {
+        self.initialPortalImport = initialPortalImport
+        self.autoStartOnAppear = autoStartOnAppear
+    }
     
     var body: some View {
         NavigationStack {
@@ -162,6 +172,9 @@ struct CreateSessionView: View {
                     }
                 }
             }
+            .onAppear {
+                applyInitialPortalImportIfNeeded()
+            }
             .fullScreenCover(item: $createdSession) { session in
                 NavigationStack {
                     SessionView(sessionViewModel: SessionViewModel(
@@ -223,6 +236,71 @@ struct CreateSessionView: View {
         )
         
         createdSession = session
+    }
+
+    private func applyInitialPortalImportIfNeeded() {
+        guard !hasAppliedInitialPortalImport,
+              let portalImport = initialPortalImport else {
+            return
+        }
+
+        hasAppliedInitialPortalImport = true
+
+        sessionTitle = trimmed(portalImport.topic)
+        userName = trimmed(portalImport.fullName)
+        claimText = trimmed(portalImport.summary)
+        requestedOutcome = trimmed(portalImport.additionalNotes)
+        communicationMode = .structuredConversation
+        evidenceItems = importedEvidenceItems(from: portalImport)
+        documentImportError = nil
+
+        guard autoStartOnAppear,
+              !hasAutoStartedImportedSession else {
+            return
+        }
+
+        hasAutoStartedImportedSession = true
+
+        DispatchQueue.main.async {
+            guard canCreateSession else {
+                hasAutoStartedImportedSession = false
+                return
+            }
+
+            createSession()
+        }
+    }
+
+    private func importedEvidenceItems(from portalImport: PortalSessionImport) -> [DraftEvidenceItem] {
+        var importedItems: [DraftEvidenceItem] = []
+
+        let trimmedNotes = trimmed(portalImport.additionalNotes)
+        let requestLabel = portalImport.requestId.map { "Portal request \($0)" } ?? "Portal barcode import"
+        let importDetail = trimmedNotes.isEmpty
+            ? "Imported from WelcomTalk Portal barcode to start the session."
+            : trimmedNotes
+
+        importedItems.append(
+            DraftEvidenceItem(
+                title: requestLabel,
+                detail: importDetail,
+                kind: .text,
+                fileName: nil
+            )
+        )
+
+        importedItems.append(
+            contentsOf: portalImport.attachments.map { attachment in
+                DraftEvidenceItem(
+                    title: attachment.fileName,
+                    detail: "Imported portal attachment reference: \(attachment.storageRef)",
+                    kind: .document,
+                    fileName: attachment.fileName
+                )
+            }
+        )
+
+        return importedItems
     }
 
     private func addTextEvidence() {

@@ -138,13 +138,14 @@ extension PortalSessionImport {
             fullName: record.fullName,
             topic: record.topic,
             summary: record.summary,
-            additionalNotes: record.additionalNotes
+            additionalNotes: record.additionalNotes,
+            attachments: record.attachments
         )
     }
 
-    func resolveHostedSession(using service: PortalRequestService? = nil) async throws -> Session {
-        if let hostedSession = makeHostedSession() {
-            return hostedSession
+    func resolvePortalImport(using service: PortalRequestService? = nil) async throws -> PortalSessionImport {
+        if makeHostedSession() != nil {
+            return self
         }
 
         guard let requestId,
@@ -154,8 +155,13 @@ extension PortalSessionImport {
 
         let requestService = service ?? PortalRequestService()
         let record = try await requestService.fetchRequest(requestId: requestId)
+        return PortalSessionImport(record: record)
+    }
 
-        guard let hostedSession = PortalSessionImport(record: record).makeHostedSession() else {
+    func resolveHostedSession(using service: PortalRequestService? = nil) async throws -> Session {
+        let resolvedImport = try await resolvePortalImport(using: service)
+
+        guard let hostedSession = resolvedImport.makeHostedSession() else {
             throw PortalRequestServiceError.invalidResponse
         }
 
