@@ -37,6 +37,9 @@ struct JoinSessionView: View {
                         .textContentType(.name)
                         .submitLabel(.next)
                         .focused($focusedField, equals: .userName)
+                        .onChange(of: userName) { oldValue, newValue in
+                            handlePotentialPortalPaste(newValue)
+                        }
                     
                     HStack {
                         TextField("Session Code", text: $sessionCode)
@@ -47,6 +50,11 @@ struct JoinSessionView: View {
                             .submitLabel(.done)
                             .focused($focusedField, equals: .sessionCode)
                             .onChange(of: sessionCode) { oldValue, newValue in
+                                if let portalImport = PortalSessionImport.parse(from: newValue.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                                    handlePotentialPortalPaste(newValue, parsedImport: portalImport)
+                                    return
+                                }
+
                                 let normalizedValue = normalizedSessionCode(from: newValue)
 
                                 if normalizedValue != newValue {
@@ -340,6 +348,20 @@ struct JoinSessionView: View {
             || normalizedValue.contains("portal-start")
             || normalizedValue.contains("welcomeport")
             || normalizedValue.contains("rid=")
+    }
+
+    private func handlePotentialPortalPaste(_ rawValue: String, parsedImport: PortalSessionImport? = nil) {
+        guard !isJoining else { return }
+
+        let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let portalImport = parsedImport ?? PortalSessionImport.parse(from: trimmedValue)
+
+        guard isPotentialPortalInput(trimmedValue),
+              let portalImport else {
+            return
+        }
+
+        startPortalImport(portalImport)
     }
 
     private func startPortalImport(_ portalImport: PortalSessionImport) {

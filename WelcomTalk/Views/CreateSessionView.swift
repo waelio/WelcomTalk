@@ -23,6 +23,8 @@ struct CreateSessionView: View {
     @State private var evidenceItems: [DraftEvidenceItem] = []
     @State private var showingDocumentImporter = false
     @State private var documentImportError: String?
+    @State private var portalImportError: String?
+    @State private var isImportingPortalRequest = false
     /// Rounds per party. Total turn count = maxTurns × 2. Default: 2 rounds each (4 total).
     @State private var maxTurns: Int = 2
     /// Speaking time per turn in seconds. Default: 30 seconds.
@@ -45,11 +47,17 @@ struct CreateSessionView: View {
                         .textContentType(.none)
                         .submitLabel(.next)
                         .focused($focusedField, equals: .sessionTitle)
+                        .onChange(of: sessionTitle) { oldValue, newValue in
+                            handlePotentialPortalPaste(newValue)
+                        }
 
                     TextField("Your Name", text: $userName)
                         .textContentType(.name)
                         .submitLabel(.done)
                         .focused($focusedField, equals: .userName)
+                        .onChange(of: userName) { oldValue, newValue in
+                            handlePotentialPortalPaste(newValue)
+                        }
                     
                     Picker("Equal Rounds per Participant", selection: $maxTurns) {
                         Text("2 rounds each  (4 total)").tag(2)
@@ -78,10 +86,16 @@ struct CreateSessionView: View {
 
                         TextEditor(text: $claimText)
                             .frame(minHeight: 110)
+                            .onChange(of: claimText) { oldValue, newValue in
+                                handlePotentialPortalPaste(newValue)
+                            }
                     }
 
                     TextField("Desired outcome or resolution", text: $requestedOutcome)
                         .textContentType(.none)
+                        .onChange(of: requestedOutcome) { oldValue, newValue in
+                            handlePotentialPortalPaste(newValue)
+                        }
 
                     Picker("Communication Mode", selection: $communicationMode) {
                         ForEach(SessionCaseFile.CommunicationMode.allCases, id: \.self) { mode in
@@ -118,6 +132,17 @@ struct CreateSessionView: View {
                     Text(communicationMode.documentationNote)
                         .font(.caption)
                         .foregroundColor(.secondary)
+
+                    if isImportingPortalRequest {
+                        ProgressView("Importing portal barcode...")
+                            .font(.caption)
+                    }
+
+                    if let portalImportError {
+                        Text(portalImportError)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
 
                     if let documentImportError {
                         Text(documentImportError)
@@ -246,6 +271,13 @@ struct CreateSessionView: View {
 
         hasAppliedInitialPortalImport = true
 
+        applyPortalImport(portalImport, autoStart: autoStartOnAppear)
+    }
+
+    private func applyPortalImport(_ portalImport: PortalSessionImport, autoStart: Bool) {
+        portalImportError = nil
+        isImportingPortalRequest = false
+
         sessionTitle = trimmed(portalImport.topic)
         userName = trimmed(portalImport.fullName)
         claimText = trimmed(portalImport.summary)
@@ -254,7 +286,7 @@ struct CreateSessionView: View {
         evidenceItems = importedEvidenceItems(from: portalImport)
         documentImportError = nil
 
-        guard autoStartOnAppear,
+        guard autoStart,
               !hasAutoStartedImportedSession else {
             return
         }
@@ -269,6 +301,45 @@ struct CreateSessionView: View {
 
             createSession()
         }
+    }
+
+    private func handlePotentialPortalPaste(_ rawValue: String) {
+        guard !isImportingPortalRequest else { return }
+
+        let trimmedValue = trimmed(rawValue)
+
+        guard looksLikePortalLink(trimmedValue),
+              let portalImport = PortalSessionImport.parse(from: trimmedValue) else {
+            return
+        }
+
+        dismissKeyboard()
+        portalImportError = nil
+        isImportingPortalRequest = true
+
+        Task {
+            do {
+                let resolvedPortalImport = try await portalImport.resolvePortalImport()
+
+                await MainActor.run {
+                    applyPortalImport(resolvedPortalImport, autoStart: true)
+                }
+            } catch {
+                await MainActor.run {
+                    portalImportError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    isImportingPortalRequest = false
+                }
+            }
+        }
+    }
+
+    private func looksLikePortalLink(_ value: String) -> Bool {
+        let normalizedValue = value.lowercased()
+
+        return normalizedValue.contains("://")
+            || normalizedValue.contains("welcomeport")
+            || normalizedValue.contains("portalstart")
+            || normalizedValue.contains("rid=")
     }
 
     private func importedEvidenceItems(from portalImport: PortalSessionImport) -> [DraftEvidenceItem] {
