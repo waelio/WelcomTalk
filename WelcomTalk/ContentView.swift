@@ -268,6 +268,7 @@ struct PortalSessionImport {
             ?? queryValues["summary"]
             ?? ""
         let additionalNotes = queryValues["notes"]
+            ?? queryValues["a"]
             ?? queryValues["additionalnotes"]
             ?? queryValues["additional_notes"]
             ?? ""
