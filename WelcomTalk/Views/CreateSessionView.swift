@@ -41,7 +41,7 @@ struct CreateSessionView: View {
                         .submitLabel(.done)
                         .focused($focusedField, equals: .userName)
                     
-                    Picker("Rounds per Person", selection: $maxTurns) {
+                    Picker("Equal Rounds per Participant", selection: $maxTurns) {
                         Text("2 rounds each  (4 total)").tag(2)
                         Text("4 rounds each  (8 total)").tag(4)
                         Text("6 rounds each  (12 total)").tag(6)
@@ -49,7 +49,7 @@ struct CreateSessionView: View {
                         Text("10 rounds each  (20 total)").tag(10)
                     }
                     
-                    Picker("Time Per Turn", selection: $turnDuration) {
+                    Picker("Equal Time per Turn", selection: $turnDuration) {
                         Text("30 seconds  (quick reply)").tag(TimeInterval(30))
                         Text("45 seconds  (standard reply)").tag(TimeInterval(45))
                         Text("50 seconds").tag(TimeInterval(50))
@@ -60,9 +60,9 @@ struct CreateSessionView: View {
                     }
                 }
 
-                Section("Claim & Evidence") {
+                Section("Conversation Focus & Supporting Details") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Opening claim")
+                        Text("Opening summary")
                             .font(.caption)
                             .foregroundColor(.secondary)
 
@@ -70,7 +70,7 @@ struct CreateSessionView: View {
                             .frame(minHeight: 110)
                     }
 
-                    TextField("Requested outcome or resolution", text: $requestedOutcome)
+                    TextField("Desired outcome or resolution", text: $requestedOutcome)
                         .textContentType(.none)
 
                     Picker("Communication Mode", selection: $communicationMode) {
@@ -129,11 +129,11 @@ struct CreateSessionView: View {
                 
                 Section("How It Works") {
                     VStack(alignment: .leading, spacing: 8) {
-                        InstructionRow(icon: "text.quote", color: .blue, text: "The initiator files the opening claim and supporting evidence before the session begins")
-                        InstructionRow(icon: "timer", color: .blue, text: "Each side gets equal, timed reply windows once the session starts")
-                        InstructionRow(icon: "mic.slash", color: .red, text: "Only one person can speak at a time — no interruptions")
-                        InstructionRow(icon: "square.and.arrow.up", color: .blue, text: "This phone shares the code and documented case file")
-                        InstructionRow(icon: "doc.text.fill", color: .green, text: "Claims, evidence, selected communication mode, notes, and transcripts are all logged for export")
+                        InstructionRow(icon: "scale.3d", color: .blue, text: "WelcomTalk starts from a fairness rule: each participant gets the same number of turns and the same amount of time by default")
+                        InstructionRow(icon: "timer", color: .blue, text: "Turn-taking keeps the conversation balanced so everyone has a chance to present their side")
+                        InstructionRow(icon: "mic.slash", color: .red, text: "Only one person speaks at a time, which helps prevent interruptions and keeps the app neutral")
+                        InstructionRow(icon: "pause.circle", color: .orange, text: "If emotions rise, anyone can pause or ask for a short grace period before the next turn")
+                        InstructionRow(icon: "doc.text.fill", color: .green, text: "The opening summary, supporting details, notes, and transcripts are all logged for follow-up and export")
                     }
                 }
                 
@@ -141,7 +141,7 @@ struct CreateSessionView: View {
                     Button(action: createSession) {
                         HStack {
                             Spacer()
-                            Text("Start Conversation")
+                            Text("Start Fair Conversation")
                                 .bold()
                             Spacer()
                         }

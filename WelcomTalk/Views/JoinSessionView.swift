@@ -137,7 +137,7 @@ struct JoinSessionView: View {
                         Divider()
                             .padding(.vertical, 4)
                         
-                        Text("Once joined, you'll take turns speaking. Only one person can talk at a time, creating a safe space for respectful communication.")
+                        Text("Once joined, WelcomTalk gives each participant equal timed turns. Only one person speaks at a time, creating a fair space for respectful communication.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .italic()

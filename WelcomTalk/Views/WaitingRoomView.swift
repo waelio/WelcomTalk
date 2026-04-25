@@ -20,8 +20,8 @@ struct WaitingRoomView: View {
                 // Session detail card
                 VStack(alignment: .leading, spacing: 12) {
                     DetailRow(icon: "person.fill",         title: "Host",          value: sessionViewModel.session?.partyAName ?? "You")
-                    DetailRow(icon: "timer",               title: "Time per turn", value: timeString(from: sessionViewModel.session?.turnDuration ?? 120))
-                    DetailRow(icon: "arrow.left.arrow.right", title: "Rounds", value: "\(sessionViewModel.session?.maxTurns ?? 2) each  (\(sessionViewModel.session?.totalTurns ?? 4) total)")
+                    DetailRow(icon: "timer",               title: "Equal time per turn", value: timeString(from: sessionViewModel.session?.turnDuration ?? 120))
+                    DetailRow(icon: "arrow.left.arrow.right", title: "Equal rounds", value: "\(sessionViewModel.session?.maxTurns ?? 2) each  (\(sessionViewModel.session?.totalTurns ?? 4) total)")
                     if let communicationMode = sessionViewModel.session?.caseFile?.communicationMode {
                         DetailRow(icon: communicationMode.symbolName, title: "Mode", value: communicationMode.displayName)
                     }
@@ -30,9 +30,21 @@ struct WaitingRoomView: View {
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.1)))
                 .padding(.horizontal, 20)
 
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Fairness rule")
+                        .font(.headline)
+
+                    Text("WelcomTalk keeps the session neutral by giving each participant the same number of turns and the same amount of time by default.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(20)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.orange.opacity(0.08)))
+                .padding(.horizontal, 20)
+
                 if let caseFile = sessionViewModel.session?.caseFile {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Documented Case File")
+                        Text("Shared Session Context")
                             .font(.headline)
 
                         Text(caseFile.claimText)
@@ -166,7 +178,7 @@ struct WaitingRoomView: View {
 
             ProgressView()
                 .padding(.top, 4)
-            Text("Waiting for the other person to join…")
+            Text("Waiting for the next participant to join…")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -187,7 +199,7 @@ struct WaitingRoomView: View {
                     .bold()
                     .multilineTextAlignment(.center)
 
-                Text("Tap below to start the conversation.")
+                Text("Tap below to start the equal-time conversation.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }

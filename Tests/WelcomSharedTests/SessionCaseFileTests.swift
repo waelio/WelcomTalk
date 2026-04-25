@@ -46,3 +46,25 @@ import Testing
     #expect(session.caseFile?.evidenceItems.count == 1)
     #expect(session.totalTurns == 4)
 }
+
+@Test func sessionSummaryHighlightsEqualTimeFairness() {
+    let session = Session(
+        title: "Shared Parenting Plan",
+        sessionCode: "FAIR12",
+        status: .active,
+        currentTurn: .partyA,
+        currentTurnNumber: 1,
+        maxTurns: 3,
+        turnDuration: 60,
+        partyAId: "host-1",
+        partyBId: "guest-1",
+        partyAName: "Taylor",
+        partyBName: "Jordan"
+    )
+
+    let summary = SessionSummaryViewModel(session: session)
+
+    #expect(summary.totalRoundsText == "3 equal rounds each")
+    #expect(summary.fairnessLine.contains("Equal time for each participant"))
+    #expect(summary.accessibilitySummary.contains("Equal time for each participant"))
+}

@@ -65,7 +65,7 @@ struct SessionView: View {
 
                 if let caseFile = sessionViewModel.session?.caseFile {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Filed claim")
+                        Text("Shared context")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text(caseFile.claimText)
@@ -79,6 +79,11 @@ struct SessionView: View {
                     .background(Color.blue.opacity(0.08))
                     .cornerRadius(12)
                 }
+
+                Text("Once the host lets you in, WelcomTalk will keep the conversation fair with equal timed turns.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
 
             ProgressView()
@@ -108,6 +113,10 @@ struct SessionView: View {
                 VStack(spacing: 20) {
                     // Timer Section
                     timerSection
+
+                    if let session = sessionViewModel.session {
+                        fairnessSection(summary: SessionSummaryViewModel(session: session))
+                    }
 
                     // Case file
                     if sessionViewModel.session?.caseFile != nil {
@@ -252,10 +261,32 @@ struct SessionView: View {
 
             if let currentTurn = sessionViewModel.session?.currentTurnNumber,
                let session = sessionViewModel.session {
-                Text("Turn \(currentTurn) of \(session.totalTurns)  (\(session.maxTurns) each)")
+                Text("Turn \(currentTurn) of \(session.totalTurns)  •  \(session.maxTurns) equal rounds each")
                     .font(.headline)
             }
         }
+    }
+
+    private func fairnessSection(summary: SessionSummaryViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "scale.3d")
+                    .foregroundColor(.blue)
+                Text("Fair turn-taking")
+                    .font(.headline)
+                Spacer()
+            }
+
+            Text(summary.fairnessLine)
+                .font(.subheadline)
+
+            Text("WelcomTalk stays neutral: one person speaks at a time, both participants get the same time, and everyone has space to present their side.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color.blue.opacity(0.05))
+        .cornerRadius(12)
     }
 
     private var timerCircle: some View {
@@ -499,7 +530,7 @@ struct SessionView: View {
                 Spacer()
                 
                 if !sessionViewModel.isMyTurn {
-                    Text("(Opponent's turn)")
+                    Text("(Other participant's turn)")
                         .font(.caption)
                         .foregroundColor(.orange)
                 }
@@ -510,7 +541,7 @@ struct SessionView: View {
                 .padding(4)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
-                .disabled(sessionViewModel.isMyTurn) // Can only take notes when opponent is speaking
+                .disabled(sessionViewModel.isMyTurn) // Can only take notes while the other participant is speaking
             
             HStack {
                 Spacer()

@@ -36,7 +36,11 @@ public struct SessionSummaryViewModel {
     }
 
     public var totalRoundsText: String {
-        "\(session.maxTurns) rounds per person"
+        "\(session.maxTurns) equal rounds each"
+    }
+
+    public var fairnessLine: String {
+        "Equal time for each participant • \(totalRoundsText) • \(turnDurationText)"
     }
 
     public var turnDurationText: String {
@@ -57,7 +61,7 @@ public struct SessionSummaryViewModel {
     }
 
     public var accessibilitySummary: String {
-        "\(title), code \(sessionCode), \(statusText), \(turnProgressText), current speaker \(currentSpeakerName), \(turnDurationText) per turn."
+        "\(title), code \(sessionCode), \(statusText), \(turnProgressText), current speaker \(currentSpeakerName), \(fairnessLine)."
     }
 
     private static func format(duration: TimeInterval) -> String {

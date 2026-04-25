@@ -423,11 +423,11 @@ class SessionViewModel: ObservableObject {
             var lines = [
                 "Session: \(session.title)",
                 "Code: \(session.sessionCode)",
-                "Participants: \(session.partyAName) vs \(session.partyBName)",
+                "Participants: \(session.partyAName) • \(session.partyBName)",
             ]
 
             if let caseFile = session.caseFile {
-                lines.append("Claim: \(caseFile.claimText)")
+                lines.append("Opening summary: \(caseFile.claimText)")
                 if !caseFile.requestedOutcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     lines.append("Requested outcome: \(caseFile.requestedOutcome)")
                 }
@@ -682,7 +682,7 @@ class SessionViewModel: ObservableObject {
         guard let participantId = pendingParticipantId else { return }
         guard var session = session, session.status == .waiting else { return }
 
-        let participantLabel = pendingParticipantName ?? "Party B"
+        let participantLabel = pendingParticipantName ?? "Participant B"
 
         session.partyBId = participantId
         session.partyBName = participantLabel
@@ -782,7 +782,7 @@ class SessionViewModel: ObservableObject {
         
         self.session = session
         
-        addLogEntry(type: .userJoined, message: "Party B joined the session")
+        addLogEntry(type: .userJoined, message: "A participant joined the session")
         addLogEntry(type: .turnStarted, message: "\(session.currentTurn.displayName) turn started")
         
         // Start the timer now that both parties are present

@@ -1,7 +1,7 @@
 import Foundation
 
-/// Represents a single structured conversation session between two parties.
-/// Both parties alternate timed speaking turns; the session ends when all rounds are complete.
+/// Represents a single structured conversation session between two participants.
+/// Both participants alternate timed speaking turns so each person gets the same opportunity to speak.
 public struct Session: Identifiable, Codable {
     public let id: String
     public var title: String
@@ -35,8 +35,8 @@ public struct Session: Identifiable, Codable {
 
         public var displayName: String {
             switch self {
-            case .partyA: return "Party A"
-            case .partyB: return "Party B"
+            case .partyA: return "Participant A"
+            case .partyB: return "Participant B"
             }
         }
     }
@@ -59,8 +59,8 @@ public struct Session: Identifiable, Codable {
                 turnDuration: TimeInterval = 120,
                 partyAId: String,
                 partyBId: String,
-                partyAName: String = "Party A",
-                partyBName: String = "Party B",
+                partyAName: String = "Participant A",
+                partyBName: String = "Participant B",
                 createdAt: Date = Date(),
                 turnStartedAt: Date? = nil) {
         self.id = id
