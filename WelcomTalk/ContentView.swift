@@ -252,30 +252,25 @@ struct PortalSessionImport {
         let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !normalizedCode.isEmpty,
-              let schemeSeparator = normalizedCode.range(of: "://") else {
+              let components = URLComponents(string: normalizedCode),
+              let queryValues = queryValues(from: components) else {
             return nil
         }
 
-        let scheme = String(normalizedCode[..<schemeSeparator.lowerBound])
-        guard scheme.caseInsensitiveCompare("welcomtalk") == .orderedSame else {
-            return nil
-        }
-
-        let remainder = String(normalizedCode[schemeSeparator.upperBound...])
-        let remainderParts = remainder.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
-
-        guard let host = remainderParts.first,
-              host.caseInsensitiveCompare("portal-start") == .orderedSame else {
-            return nil
-        }
-
-        let query = remainderParts.count > 1 ? String(remainderParts[1]) : ""
-        let queryValues = parseQuery(query)
-
-        let fullName = queryValues["n"] ?? ""
-        let topic = queryValues["t"] ?? ""
-        let summary = queryValues["s"] ?? ""
-        let additionalNotes = queryValues["notes"] ?? ""
+        let fullName = queryValues["n"]
+            ?? queryValues["fullname"]
+            ?? queryValues["full_name"]
+            ?? ""
+        let topic = queryValues["t"]
+            ?? queryValues["topic"]
+            ?? ""
+        let summary = queryValues["s"]
+            ?? queryValues["summary"]
+            ?? ""
+        let additionalNotes = queryValues["notes"]
+            ?? queryValues["additionalnotes"]
+            ?? queryValues["additional_notes"]
+            ?? ""
 
         guard !fullName.isEmpty,
               !topic.isEmpty,
@@ -291,18 +286,80 @@ struct PortalSessionImport {
         )
     }
 
-    private static func parseQuery(_ query: String) -> [String: String] {
-        query
-            .split(separator: "&", omittingEmptySubsequences: true)
-            .reduce(into: [String: String]()) { result, pair in
-                let parts = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
-                guard let rawKey = parts.first else { return }
+    private static func queryValues(from components: URLComponents) -> [String: String]? {
+        let normalizedScheme = (components.scheme ?? "").lowercased()
 
-                let key = decodeQueryComponent(String(rawKey)).lowercased()
-                let value = parts.count > 1 ? decodeQueryComponent(String(parts[1])) : ""
-
-                result[key] = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch normalizedScheme {
+        case "welcomtalk":
+            guard isPortalStartRoute(
+                host: components.host,
+                path: components.path,
+                queryItems: components.queryItems,
+                allowQueryFlag: false
+            ) else {
+                return nil
             }
+
+        case "https", "http":
+            guard isSupportedPortalHost(components.host),
+                  isPortalStartRoute(
+                    host: components.host,
+                    path: components.path,
+                    queryItems: components.queryItems,
+                    allowQueryFlag: true
+                  ) else {
+                return nil
+            }
+
+        default:
+            return nil
+        }
+
+        return parseQueryItems(components.queryItems ?? [])
+    }
+
+    private static func isSupportedPortalHost(_ host: String?) -> Bool {
+        guard let normalizedHost = host?.lowercased() else { return false }
+
+        return normalizedHost == "welcomeport.netlify.app"
+            || normalizedHost == "www.welcomeport.netlify.app"
+    }
+
+    private static func isPortalStartRoute(
+        host: String?,
+        path: String,
+        queryItems: [URLQueryItem]?,
+        allowQueryFlag: Bool
+    ) -> Bool {
+        let normalizedHost = (host ?? "").lowercased()
+        let normalizedPath = path
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .lowercased()
+
+        if normalizedHost == "portal-start" || normalizedPath == "portal-start" {
+            return true
+        }
+
+        guard allowQueryFlag else { return false }
+
+        let queryValues = parseQueryItems(queryItems ?? [])
+        let portalStartFlag = queryValues["portalstart"] ?? queryValues["portal-start"]
+
+        switch portalStartFlag?.lowercased() {
+        case "", "1", "true", "yes", "y":
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static func parseQueryItems(_ items: [URLQueryItem]) -> [String: String] {
+        items.reduce(into: [String: String]()) { result, item in
+            let key = item.name.lowercased()
+            let value = decodeQueryComponent(item.value ?? "")
+
+            result[key] = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
     }
 
     private static func decodeQueryComponent(_ value: String) -> String {

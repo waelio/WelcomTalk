@@ -81,7 +81,7 @@ struct JoinSessionView: View {
                             Spacer()
                             Image(systemName: "qrcode.viewfinder")
                                 .symbolRenderingMode(.hierarchical)
-                            Text("Scan QR Code")
+                            Text("Scan QR / Barcode")
                                 .bold()
                             Spacer()
                         }
@@ -91,7 +91,7 @@ struct JoinSessionView: View {
                 } header: {
                     Text("Quick Join")
                 } footer: {
-                    Text("Scan the code shown on the first phone, or scan a WelcomTalk Portal barcode to start from the questionnaire")
+                    Text("Scan the code shown on the first phone, or scan a WelcomTalk Portal QR/barcode to start from the questionnaire")
                         .font(.caption)
                 }
                 

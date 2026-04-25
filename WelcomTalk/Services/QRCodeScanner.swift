@@ -75,7 +75,22 @@ class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsD
             captureSession.addOutput(metadataOutput)
             
             metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.qr]
+            let supportedTypes: Set<AVMetadataObject.ObjectType> = [
+                .qr,
+                .aztec,
+                .pdf417,
+                .dataMatrix,
+                .code128,
+                .code39,
+                .code93,
+                .ean8,
+                .ean13,
+                .upce
+            ]
+
+            metadataOutput.metadataObjectTypes = metadataOutput.availableMetadataObjectTypes.filter {
+                supportedTypes.contains($0)
+            }
         } else {
             showError("Could not add metadata output.")
             return
@@ -103,7 +118,7 @@ class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsD
         
         // Add instruction label
         let label = UILabel()
-        label.text = "Scan session QR code"
+        label.text = "Scan session QR code or barcode"
         label.textColor = .white
         label.font = .systemFont(ofSize: 18, weight: .semibold)
         label.textAlignment = .center
