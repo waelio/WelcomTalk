@@ -10,12 +10,14 @@ import SwiftUI
 struct ContentView: View {
     @State private var showingCreateSession = false
     @State private var showingJoinSession = false
-    @State private var showingDemoSession = false
+    @State private var showingPortalScanner = false
     @State private var showingMessagingSettings = false
-    @StateObject private var demoViewModel = SessionViewModel()
+    @State private var scannedPortalCode: String?
+    @State private var importedPortalSession: Session?
+    @State private var portalImportError: String?
 
     private var websiteStartURL: URL {
-        URL(string: "https://welcomesit.netlify.app/")!
+        URL(string: "https://welcomeport.netlify.app/")!
     }
     
     var body: some View {
@@ -84,10 +86,10 @@ struct ContentView: View {
                         .accessibilityLabel("Join Equal-Time Session")
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Start from the website")
+                            Text("Start from WelcomTalk Portal")
                                 .font(.headline)
 
-                            Text("Anyone can begin on the website, create the JSON request record, and then continue in the app.")
+                            Text("Anyone can begin in WelcomTalk Portal, fill the questionnaire, create the barcode, and then scan it here to start the session.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.leading)
@@ -95,7 +97,7 @@ struct ContentView: View {
                             Link(destination: websiteStartURL) {
                                 HStack {
                                     Image(systemName: "globe")
-                                    Text("Open Website JSON Builder")
+                                    Text("Open WelcomTalk Portal")
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -103,7 +105,7 @@ struct ContentView: View {
                                 .foregroundColor(.green)
                                 .cornerRadius(12)
                             }
-                            .accessibilityLabel("Open Website JSON Builder")
+                            .accessibilityLabel("Open WelcomTalk Portal")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
@@ -114,22 +116,31 @@ struct ContentView: View {
                             .padding(.vertical, 10)
 
                         Button {
-                            showingDemoSession = true
+                            portalImportError = nil
+                            showingPortalScanner = true
                         } label: {
                             HStack {
-                                Image(systemName: "play.circle")
-                                Text("Try Fairness Demo")
+                                Image(systemName: "qrcode.viewfinder")
+                                Text("Scan Portal Barcode")
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.gray.opacity(0.2))
-                            .foregroundColor(.primary)
+                            .background(Color.green.opacity(0.18))
+                            .foregroundColor(.green)
                             .cornerRadius(12)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Try Fairness Demo")
+                        .accessibilityLabel("Scan Portal Barcode")
                     }
                     .padding(.horizontal, 40)
+
+                    if let portalImportError {
+                        Text(portalImportError)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 36)
+                    }
 
                     Text("Current live session engine supports two participants today, while the broader product direction stays open to bigger moderated formats later.")
                         .font(.caption)
@@ -178,16 +189,135 @@ struct ContentView: View {
             .sheet(isPresented: $showingMessagingSettings) {
                 MessagingServerSettingsView()
             }
-            .fullScreenCover(isPresented: $showingDemoSession) {
+            .sheet(isPresented: $showingPortalScanner, onDismiss: handlePortalScannerDismiss) {
+                QRCodeScannerView(scannedCode: $scannedPortalCode)
+            }
+            .fullScreenCover(item: $importedPortalSession) { session in
                 NavigationStack {
-                    SessionView(sessionViewModel: demoViewModel)
+                    SessionView(
+                        sessionViewModel: SessionViewModel(
+                            session: session,
+                            userId: session.partyAId,
+                            userName: session.partyAName,
+                            isHost: true
+                        )
+                    )
                 }
             }
         }
     }
 
     private var appShareMessage: String {
-        "Try WelcomTalk - Equal Time for Every Voice\n\nWelcomTalk helps people present their side fairly with equal timed turns, one speaker at a time, and a neutral structure that reduces interruptions.\n\nStart from the website to generate the JSON request record:\nhttps://welcomesit.netlify.app/\n\nThen continue in the app to start or join the conversation."
+        "Try WelcomTalk - Equal Time for Every Voice\n\nWelcomTalk helps people present their side fairly with equal timed turns, one speaker at a time, and a neutral structure that reduces interruptions.\n\nStart in WelcomTalk Portal, fill the questionnaire, create the barcode, and scan it in the app:\nhttps://welcomeport.netlify.app/\n\nThen continue in the app to start or join the conversation."
+    }
+
+    private func handlePortalScannerDismiss() {
+        guard let scannedPortalCode else { return }
+
+        defer {
+            self.scannedPortalCode = nil
+        }
+
+        guard let portalImport = PortalSessionImport.parse(from: scannedPortalCode) else {
+            portalImportError = "That barcode is not a WelcomTalk Portal start code."
+            return
+        }
+
+        portalImportError = nil
+        importedPortalSession = portalImport.makeHostedSession()
+    }
+}
+
+struct PortalSessionImport {
+    let fullName: String
+    let topic: String
+    let summary: String
+    let additionalNotes: String
+
+    static func parse(from code: String) -> PortalSessionImport? {
+        let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !normalizedCode.isEmpty,
+              let schemeSeparator = normalizedCode.range(of: "://") else {
+            return nil
+        }
+
+        let scheme = String(normalizedCode[..<schemeSeparator.lowerBound])
+        guard scheme.caseInsensitiveCompare("welcomtalk") == .orderedSame else {
+            return nil
+        }
+
+        let remainder = String(normalizedCode[schemeSeparator.upperBound...])
+        let remainderParts = remainder.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
+
+        guard let host = remainderParts.first,
+              host.caseInsensitiveCompare("portal-start") == .orderedSame else {
+            return nil
+        }
+
+        let query = remainderParts.count > 1 ? String(remainderParts[1]) : ""
+        let queryValues = parseQuery(query)
+
+        let fullName = queryValues["n"] ?? ""
+        let topic = queryValues["t"] ?? ""
+        let summary = queryValues["s"] ?? ""
+        let additionalNotes = queryValues["notes"] ?? ""
+
+        guard !fullName.isEmpty,
+              !topic.isEmpty,
+              !summary.isEmpty else {
+            return nil
+        }
+
+        return PortalSessionImport(
+            fullName: fullName,
+            topic: topic,
+            summary: summary,
+            additionalNotes: additionalNotes
+        )
+    }
+
+    private static func parseQuery(_ query: String) -> [String: String] {
+        query
+            .split(separator: "&", omittingEmptySubsequences: true)
+            .reduce(into: [String: String]()) { result, pair in
+                let parts = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+                guard let rawKey = parts.first else { return }
+
+                let key = decodeQueryComponent(String(rawKey)).lowercased()
+                let value = parts.count > 1 ? decodeQueryComponent(String(parts[1])) : ""
+
+                result[key] = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+    }
+
+    private static func decodeQueryComponent(_ value: String) -> String {
+        let plusDecoded = value.replacingOccurrences(of: "+", with: " ")
+        return plusDecoded.removingPercentEncoding ?? plusDecoded
+    }
+
+    func makeHostedSession() -> Session {
+        let hostId = UUID().uuidString
+        return Session(
+            title: topic,
+            sessionCode: SessionViewModel.generateCode(),
+            caseFile: SessionCaseFile(
+                claimText: summary,
+                requestedOutcome: additionalNotes,
+                communicationMode: .structuredConversation,
+                evidenceItems: []
+            ),
+            status: .waiting,
+            currentTurn: .partyA,
+            currentTurnNumber: 1,
+            maxTurns: 2,
+            turnDuration: 45,
+            partyAId: hostId,
+            partyBId: "",
+            partyAName: fullName,
+            partyBName: "Waiting for participant",
+            turnStartedAt: nil
+        )
     }
 }
 

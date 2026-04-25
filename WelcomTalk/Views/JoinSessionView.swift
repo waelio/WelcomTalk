@@ -14,9 +14,20 @@ struct JoinSessionView: View {
     @State private var isJoining = false
     @State private var errorMessage: String?
     @State private var joinedSession: Session?
+    @State private var importedPortalSession: Session?
     @State private var showingQRScanner = false
     @State private var scannedCode: String?
     @FocusState private var focusedField: Field?
+
+    private var canSubmitJoin: Bool {
+        if PortalSessionImport.parse(from: sessionCode) != nil {
+            return !isJoining
+        }
+
+        return normalizedSessionCode(from: sessionCode).count == 6
+            && !trimmedUserName.isEmpty
+            && !isJoining
+    }
     
     var body: some View {
         NavigationStack {
@@ -80,7 +91,7 @@ struct JoinSessionView: View {
                 } header: {
                     Text("Quick Join")
                 } footer: {
-                    Text("Scan the code shown on the first phone")
+                    Text("Scan the code shown on the first phone, or scan a WelcomTalk Portal barcode to start from the questionnaire")
                         .font(.caption)
                 }
                 
@@ -159,7 +170,7 @@ struct JoinSessionView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.blue)
-                    .disabled(sessionCode.count != 6 || userName.isEmpty || isJoining)
+                    .disabled(!canSubmitJoin)
                 }
             }
             .scrollDismissesKeyboard(.immediately)
@@ -175,15 +186,10 @@ struct JoinSessionView: View {
             }
             .onChange(of: nfcManager.sessionCode) { oldValue, newValue in
                 if let code = newValue {
-                    sessionCode = code
+                    handleIncomingCode(code)
                 }
             }
-            .onChange(of: scannedCode) { oldValue, newValue in
-                if let code = newValue {
-                    sessionCode = code
-                }
-            }
-            .sheet(isPresented: $showingQRScanner) {
+            .sheet(isPresented: $showingQRScanner, onDismiss: handleScannerDismiss) {
                 QRCodeScannerView(scannedCode: $scannedCode)
             }
             .fullScreenCover(item: $joinedSession) { session in
@@ -196,13 +202,96 @@ struct JoinSessionView: View {
                     ))
                 }
             }
+            .fullScreenCover(item: $importedPortalSession) { session in
+                NavigationStack {
+                    SessionView(sessionViewModel: SessionViewModel(
+                        session: session,
+                        userId: session.partyAId,
+                        userName: session.partyAName,
+                        isHost: true
+                    ))
+                }
+            }
         }
+    }
+
+    private func handleIncomingCode(_ code: String) {
+        dismissKeyboard()
+
+        let normalizedCode = normalizedSessionCode(from: code)
+
+        if let portalImport = PortalSessionImport.parse(from: normalizedCode) {
+            errorMessage = nil
+            sessionCode = ""
+            importedPortalSession = portalImport.makeHostedSession()
+            return
+        }
+
+        guard !normalizedCode.isEmpty else {
+            errorMessage = "Couldn't read a WelcomTalk code."
+            return
+        }
+
+        sessionCode = normalizedCode
+
+        guard normalizedCode.count == 6 else {
+            errorMessage = "That barcode isn't a valid WelcomTalk session code."
+            return
+        }
+
+        guard !trimmedUserName.isEmpty else {
+            errorMessage = "Enter your name, then tap Join Conversation to enter session \(normalizedCode)."
+            focusedField = .userName
+            return
+        }
+
+        errorMessage = nil
+        joinSession(using: normalizedCode, userName: trimmedUserName)
+    }
+
+    private func handleScannerDismiss() {
+        guard let scannedCode else { return }
+        defer {
+            self.scannedCode = nil
+        }
+
+        handleIncomingCode(scannedCode)
     }
     
     private func joinSession() {
+        joinSession(using: sessionCode, userName: userName)
+    }
+
+    private func joinSession(using rawSessionCode: String, userName rawUserName: String) {
         dismissKeyboard()
+
+        let normalizedCode = normalizedSessionCode(from: rawSessionCode)
+        let normalizedUserName = rawUserName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        sessionCode = normalizedCode
+        userName = normalizedUserName
         isJoining = true
         errorMessage = nil
+
+        if let portalImport = PortalSessionImport.parse(from: normalizedCode) {
+            importedPortalSession = portalImport.makeHostedSession()
+            isJoining = false
+            return
+        }
+
+        guard normalizedCode.count == 6 else {
+            errorMessage = "Enter a valid 6-character session code."
+            isJoining = false
+            focusedField = .sessionCode
+            return
+        }
+
+        guard !normalizedUserName.isEmpty else {
+            errorMessage = "Enter your name before joining the session."
+            isJoining = false
+            focusedField = .userName
+            return
+        }
         
         // Simulate network delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -211,8 +300,8 @@ struct JoinSessionView: View {
             let userId = UUID().uuidString
             
             let session = Session(
-                title: "Session \(sessionCode.uppercased())",
-                sessionCode: sessionCode,
+                title: "Session \(normalizedCode)",
+                sessionCode: normalizedCode,
                 status: .waiting,
                 currentTurn: .partyA,
                 currentTurnNumber: 1,
@@ -220,13 +309,21 @@ struct JoinSessionView: View {
                 turnDuration: 120,
                 partyAId: "pending-host",
                 partyBId: userId,
-                partyBName: userName,
+                partyBName: normalizedUserName,
                 turnStartedAt: nil
             )
             
             joinedSession = session
             isJoining = false
         }
+    }
+
+    private var trimmedUserName: String {
+        userName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func normalizedSessionCode(from value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
     }
 
     private func dismissKeyboard() {
