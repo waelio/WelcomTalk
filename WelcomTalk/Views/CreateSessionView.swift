@@ -328,8 +328,7 @@ struct CreateSessionView: View {
 
         let trimmedValue = trimmed(rawValue)
 
-        guard looksLikePortalLink(trimmedValue),
-              let portalImport = PortalSessionImport.parse(from: trimmedValue) else {
+        guard let portalImport = PortalSessionImport.parse(from: trimmedValue) else {
             return
         }
 
@@ -351,15 +350,6 @@ struct CreateSessionView: View {
                 }
             }
         }
-    }
-
-    private func looksLikePortalLink(_ value: String) -> Bool {
-        let normalizedValue = value.lowercased()
-
-        return normalizedValue.contains("://")
-            || normalizedValue.contains("welcomeport")
-            || normalizedValue.contains("portalstart")
-            || normalizedValue.contains("rid=")
     }
 
     private func syncPortalStatus(

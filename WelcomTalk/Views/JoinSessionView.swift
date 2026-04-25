@@ -356,8 +356,7 @@ struct JoinSessionView: View {
         let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let portalImport = parsedImport ?? PortalSessionImport.parse(from: trimmedValue)
 
-        guard isPotentialPortalInput(trimmedValue),
-              let portalImport else {
+        guard let portalImport else {
             return
         }
 

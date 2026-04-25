@@ -260,6 +260,16 @@ struct ContentView: View {
 }
 
 struct PortalSessionImport: Identifiable {
+    private struct PortalRequestJSON: Decodable {
+        let requestId: String?
+        let fullName: String?
+        let topic: String?
+        let summary: String?
+        let additionalNotes: String?
+        let notes: String?
+        let attachments: [PortalRequestAttachment]?
+    }
+
     let requestId: String?
     let fullName: String
     let topic: String
@@ -281,15 +291,130 @@ struct PortalSessionImport: Identifiable {
     static func parse(from code: String) -> PortalSessionImport? {
         let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !normalizedCode.isEmpty,
-              let components = URLComponents(string: normalizedCode),
+        guard !normalizedCode.isEmpty else {
+            return nil
+        }
+
+        if let portalImport = parsePortalURLImport(from: normalizedCode) {
+            return portalImport
+        }
+
+        if let portalImport = parsePortalQueryStringImport(from: normalizedCode) {
+            return portalImport
+        }
+
+        if let portalImport = parsePortalJSONImport(from: normalizedCode) {
+            return portalImport
+        }
+
+        if let portalImport = parsePortalRequestIdentifier(from: normalizedCode) {
+            return portalImport
+        }
+
+        return nil
+    }
+
+    private static func parsePortalURLImport(from value: String) -> PortalSessionImport? {
+        guard let components = URLComponents(string: value),
               let queryValues = queryValues(from: components) else {
             return nil
         }
 
-                let requestId = queryValues["rid"]
-                        ?? queryValues["requestid"]
-                        ?? queryValues["request_id"]
+        return portalImport(from: queryValues, attachments: [])
+    }
+
+    private static func parsePortalQueryStringImport(from value: String) -> PortalSessionImport? {
+        let normalizedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowercasedValue = normalizedValue.lowercased()
+
+        let looksLikePortalQuery = !lowercasedValue.contains("://")
+            && lowercasedValue.contains("=")
+            && (
+                lowercasedValue.contains("rid=")
+                || lowercasedValue.contains("requestid=")
+                || lowercasedValue.contains("request_id=")
+                || lowercasedValue.contains("portalstart")
+                || lowercasedValue.contains("portal-start")
+                || lowercasedValue.contains("n=")
+                || lowercasedValue.contains("fullname=")
+                || lowercasedValue.contains("t=")
+                || lowercasedValue.contains("topic=")
+                || lowercasedValue.contains("s=")
+                || lowercasedValue.contains("summary=")
+            )
+
+        guard looksLikePortalQuery else {
+            return nil
+        }
+
+        let queryString = normalizedValue.hasPrefix("?")
+            ? String(normalizedValue.dropFirst())
+            : normalizedValue
+
+        guard let components = URLComponents(string: "https://welcomeport.netlify.app/portal-start?\(queryString)"),
+              let queryValues = queryValues(from: components) else {
+            return nil
+        }
+
+        return portalImport(from: queryValues, attachments: [])
+    }
+
+    private static func parsePortalJSONImport(from value: String) -> PortalSessionImport? {
+        guard value.first == "{" else {
+            return nil
+        }
+
+        guard let data = value.data(using: .utf8) else {
+            return nil
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        guard let payload = try? decoder.decode(PortalRequestJSON.self, from: data) else {
+            return nil
+        }
+
+        return portalImport(
+            requestId: payload.requestId,
+            fullName: payload.fullName ?? "",
+            topic: payload.topic ?? "",
+            summary: payload.summary ?? "",
+            additionalNotes: payload.additionalNotes ?? payload.notes ?? "",
+            attachments: payload.attachments ?? []
+        )
+    }
+
+    private static func parsePortalRequestIdentifier(from value: String) -> PortalSessionImport? {
+        let normalizedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let matchesUUID = normalizedValue.range(
+            of: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            options: .regularExpression
+        ) != nil
+        let matchesRequestToken = normalizedValue.lowercased().hasPrefix("request-")
+
+        guard matchesUUID || matchesRequestToken else {
+            return nil
+        }
+
+        return portalImport(
+            requestId: normalizedValue,
+            fullName: "",
+            topic: "",
+            summary: "",
+            additionalNotes: "",
+            attachments: []
+        )
+    }
+
+    private static func portalImport(
+        from queryValues: [String: String],
+        attachments: [PortalRequestAttachment]
+    ) -> PortalSessionImport? {
+        let requestId = queryValues["rid"]
+            ?? queryValues["requestid"]
+            ?? queryValues["request_id"]
         let fullName = queryValues["n"]
             ?? queryValues["fullname"]
             ?? queryValues["full_name"]
@@ -306,21 +431,43 @@ struct PortalSessionImport: Identifiable {
             ?? queryValues["additional_notes"]
             ?? ""
 
+        return portalImport(
+            requestId: requestId,
+            fullName: fullName,
+            topic: topic,
+            summary: summary,
+            additionalNotes: additionalNotes,
+            attachments: attachments
+        )
+    }
+
+    private static func portalImport(
+        requestId: String?,
+        fullName: String,
+        topic: String,
+        summary: String,
+        additionalNotes: String,
+        attachments: [PortalRequestAttachment]
+    ) -> PortalSessionImport? {
         let normalizedRequestId = requestId?
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedFullName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedTopic = topic.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedNotes = additionalNotes.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard normalizedRequestId?.isEmpty == false
-                || (!fullName.isEmpty && !topic.isEmpty && !summary.isEmpty) else {
+                || (!trimmedFullName.isEmpty && !trimmedTopic.isEmpty && !trimmedSummary.isEmpty) else {
             return nil
         }
 
         return PortalSessionImport(
             requestId: normalizedRequestId,
-            fullName: fullName,
-            topic: topic,
-            summary: summary,
-            additionalNotes: additionalNotes,
-            attachments: []
+            fullName: trimmedFullName,
+            topic: trimmedTopic,
+            summary: trimmedSummary,
+            additionalNotes: trimmedNotes,
+            attachments: attachments
         )
     }
 
