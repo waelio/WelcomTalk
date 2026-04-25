@@ -33,6 +33,9 @@ struct CreateSessionView: View {
     @State private var hasAppliedInitialPortalImport = false
     @State private var hasAutoStartedImportedSession = false
     @State private var hasVisiblePortalImport = false
+    @State private var activePortalImport: PortalSessionImport?
+    @State private var syncedPortalRequestId: String?
+    @State private var syncedPortalStatus: PortalRequestSyncStatus = .submitted
     @FocusState private var focusedField: Field?
 
     init(initialPortalImport: PortalSessionImport? = nil, autoStartOnAppear: Bool = false) {
@@ -266,6 +269,12 @@ struct CreateSessionView: View {
             partyAName: userName,
             turnStartedAt: nil
         )
+
+        syncPortalStatus(
+            .started,
+            sessionCode: sessionCode,
+            hostDisplayName: trimmed(userName)
+        )
         
         createdSession = session
     }
@@ -285,6 +294,7 @@ struct CreateSessionView: View {
         portalImportError = nil
         isImportingPortalRequest = false
         hasVisiblePortalImport = true
+                activePortalImport = portalImport
 
         sessionTitle = trimmed(portalImport.topic)
         userName = trimmed(portalImport.fullName)
@@ -293,6 +303,8 @@ struct CreateSessionView: View {
         communicationMode = .structuredConversation
         evidenceItems = importedEvidenceItems(from: portalImport)
         documentImportError = nil
+
+                syncPortalStatus(.imported)
 
         guard autoStart,
               !hasAutoStartedImportedSession else {
@@ -348,6 +360,49 @@ struct CreateSessionView: View {
             || normalizedValue.contains("welcomeport")
             || normalizedValue.contains("portalstart")
             || normalizedValue.contains("rid=")
+    }
+
+    private func syncPortalStatus(
+        _ status: PortalRequestSyncStatus,
+        sessionCode: String? = nil,
+        hostDisplayName: String? = nil
+    ) {
+        guard let requestId = activePortalImport?.requestId?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !requestId.isEmpty else {
+            return
+        }
+
+        if syncedPortalRequestId == requestId {
+            let currentRank = portalStatusRank(syncedPortalStatus)
+            let nextRank = portalStatusRank(status)
+
+            guard nextRank > currentRank else {
+                return
+            }
+        }
+
+        syncedPortalRequestId = requestId
+        syncedPortalStatus = status
+
+        Task {
+            _ = try? await PortalRequestService().updateRequestStatus(
+                requestId: requestId,
+                status: status,
+                hostDisplayName: hostDisplayName,
+                sessionCode: sessionCode
+            )
+        }
+    }
+
+    private func portalStatusRank(_ status: PortalRequestSyncStatus) -> Int {
+        switch status {
+        case .submitted:
+            return 0
+        case .imported:
+            return 1
+        case .started:
+            return 2
+        }
     }
 
     private func importedEvidenceItems(from portalImport: PortalSessionImport) -> [DraftEvidenceItem] {

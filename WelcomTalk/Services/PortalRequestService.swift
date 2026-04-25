@@ -1,5 +1,11 @@
 import Foundation
 
+enum PortalRequestSyncStatus: String, Codable {
+    case submitted
+    case imported
+    case started
+}
+
 struct PortalRequestAttachment: Codable {
     let fileName: String
     let contentType: String
@@ -14,8 +20,12 @@ struct PortalRequestRecord: Codable {
     let topic: String
     let summary: String
     let additionalNotes: String
-    let status: String
+    let status: PortalRequestSyncStatus
     let attachments: [PortalRequestAttachment]
+    let importedAt: String?
+    let startedAt: String?
+    let hostDisplayName: String?
+    let sessionCode: String?
     let expiresAt: String
 }
 
@@ -47,6 +57,12 @@ enum PortalRequestServiceError: LocalizedError {
 struct PortalRequestService {
     private struct ErrorPayload: Codable {
         let error: String
+    }
+
+    private struct StatusUpdatePayload: Encodable {
+        let status: PortalRequestSyncStatus
+        let hostDisplayName: String?
+        let sessionCode: String?
     }
 
     var session: URLSession = .shared
@@ -94,6 +110,76 @@ struct PortalRequestService {
         var request = URLRequest(url: requestURL)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.cachePolicy = .reloadIgnoringLocalCacheData
+
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw PortalRequestServiceError.networkFailure(error.localizedDescription)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw PortalRequestServiceError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            do {
+                return try JSONDecoder().decode(PortalRequestRecord.self, from: data)
+            } catch {
+                throw PortalRequestServiceError.invalidResponse
+            }
+
+        case 404:
+            throw PortalRequestServiceError.requestNotFound
+
+        default:
+            if let errorPayload = try? JSONDecoder().decode(ErrorPayload.self, from: data) {
+                throw PortalRequestServiceError.serverError(errorPayload.error)
+            }
+
+            throw PortalRequestServiceError.serverError(
+                "The portal request service returned status \(httpResponse.statusCode)."
+            )
+        }
+    }
+
+    func updateRequestStatus(
+        requestId: String,
+        status: PortalRequestSyncStatus,
+        hostDisplayName: String? = nil,
+        sessionCode: String? = nil
+    ) async throws -> PortalRequestRecord {
+        let normalizedRequestId = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !normalizedRequestId.isEmpty else {
+            throw PortalRequestServiceError.invalidPortalPayload
+        }
+
+        let requestURL = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("portal-requests")
+            .appendingPathComponent(normalizedRequestId)
+
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+
+        let payload = StatusUpdatePayload(
+            status: status,
+            hostDisplayName: hostDisplayName?.trimmingCharacters(in: .whitespacesAndNewlines),
+            sessionCode: sessionCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+
+        do {
+            request.httpBody = try JSONEncoder().encode(payload)
+        } catch {
+            throw PortalRequestServiceError.invalidResponse
+        }
 
         let data: Data
         let response: URLResponse
