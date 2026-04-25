@@ -47,7 +47,11 @@ struct JoinSessionView: View {
                             .submitLabel(.done)
                             .focused($focusedField, equals: .sessionCode)
                             .onChange(of: sessionCode) { oldValue, newValue in
-                                sessionCode = newValue.uppercased()
+                                let normalizedValue = normalizedSessionCode(from: newValue)
+
+                                if normalizedValue != newValue {
+                                    sessionCode = normalizedValue
+                                }
                             }
                         
                         if NFCNDEFReaderSession.readingAvailable {
@@ -218,14 +222,16 @@ struct JoinSessionView: View {
     private func handleIncomingCode(_ code: String) {
         dismissKeyboard()
 
-        let normalizedCode = normalizedSessionCode(from: code)
+        let trimmedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let portalImport = PortalSessionImport.parse(from: normalizedCode) {
+        if let portalImport = PortalSessionImport.parse(from: trimmedCode) {
             errorMessage = nil
-            sessionCode = ""
-            importedPortalSession = portalImport.makeHostedSession()
+            sessionCode = trimmedCode
+            startPortalImport(portalImport)
             return
         }
+
+        let normalizedCode = normalizedSessionCode(from: trimmedCode)
 
         guard !normalizedCode.isEmpty else {
             errorMessage = "Couldn't read a WelcomTalk code."
@@ -274,8 +280,7 @@ struct JoinSessionView: View {
         errorMessage = nil
 
         if let portalImport = PortalSessionImport.parse(from: normalizedCode) {
-            importedPortalSession = portalImport.makeHostedSession()
-            isJoining = false
+            startPortalImport(portalImport)
             return
         }
 
@@ -323,7 +328,43 @@ struct JoinSessionView: View {
     }
 
     private func normalizedSessionCode(from value: String) -> String {
-        value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if isPotentialPortalInput(trimmedValue) {
+            return trimmedValue
+        }
+
+        return trimmedValue.uppercased()
+    }
+
+    private func isPotentialPortalInput(_ value: String) -> Bool {
+        let normalizedValue = value.lowercased()
+
+        return normalizedValue.contains("://")
+            || normalizedValue.contains("portal-start")
+            || normalizedValue.contains("welcomeport")
+            || normalizedValue.contains("rid=")
+    }
+
+    private func startPortalImport(_ portalImport: PortalSessionImport) {
+        isJoining = true
+        errorMessage = nil
+
+        Task {
+            do {
+                let session = try await portalImport.resolveHostedSession()
+
+                await MainActor.run {
+                    importedPortalSession = session
+                    isJoining = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    isJoining = false
+                }
+            }
+        }
     }
 
     private func dismissKeyboard() {

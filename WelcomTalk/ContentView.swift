@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var scannedPortalCode: String?
     @State private var importedPortalSession: Session?
     @State private var portalImportError: String?
+    @State private var isImportingPortalSession = false
 
     private var websiteStartURL: URL {
         URL(string: "https://welcomeport.netlify.app/")!
@@ -142,6 +143,12 @@ struct ContentView: View {
                             .padding(.horizontal, 36)
                     }
 
+                    if isImportingPortalSession {
+                        ProgressView("Opening portal request...")
+                            .font(.caption)
+                            .padding(.horizontal, 36)
+                    }
+
                     Text("Current live session engine supports two participants today, while the broader product direction stays open to bigger moderated formats later.")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -238,11 +245,28 @@ struct ContentView: View {
         }
 
         portalImportError = nil
-        importedPortalSession = portalImport.makeHostedSession()
+        isImportingPortalSession = true
+
+        Task {
+            do {
+                let session = try await portalImport.resolveHostedSession()
+
+                await MainActor.run {
+                    importedPortalSession = session
+                    isImportingPortalSession = false
+                }
+            } catch {
+                await MainActor.run {
+                    portalImportError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    isImportingPortalSession = false
+                }
+            }
+        }
     }
 }
 
 struct PortalSessionImport {
+    let requestId: String?
     let fullName: String
     let topic: String
     let summary: String
@@ -257,6 +281,9 @@ struct PortalSessionImport {
             return nil
         }
 
+                let requestId = queryValues["rid"]
+                        ?? queryValues["requestid"]
+                        ?? queryValues["request_id"]
         let fullName = queryValues["n"]
             ?? queryValues["fullname"]
             ?? queryValues["full_name"]
@@ -273,13 +300,16 @@ struct PortalSessionImport {
             ?? queryValues["additional_notes"]
             ?? ""
 
-        guard !fullName.isEmpty,
-              !topic.isEmpty,
-              !summary.isEmpty else {
+        let normalizedRequestId = requestId?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard normalizedRequestId?.isEmpty == false
+                || (!fullName.isEmpty && !topic.isEmpty && !summary.isEmpty) else {
             return nil
         }
 
         return PortalSessionImport(
+            requestId: normalizedRequestId,
             fullName: fullName,
             topic: topic,
             summary: summary,
@@ -368,7 +398,13 @@ struct PortalSessionImport {
         return plusDecoded.removingPercentEncoding ?? plusDecoded
     }
 
-    func makeHostedSession() -> Session {
+    func makeHostedSession() -> Session? {
+        guard !fullName.isEmpty,
+              !topic.isEmpty,
+              !summary.isEmpty else {
+            return nil
+        }
+
         let hostId = UUID().uuidString
         return Session(
             title: topic,
