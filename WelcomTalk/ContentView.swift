@@ -192,6 +192,7 @@ struct ContentView: View {
             .sheet(isPresented: $showingPortalScanner, onDismiss: handlePortalScannerDismiss) {
                 QRCodeScannerView(scannedCode: $scannedPortalCode)
             }
+            .onOpenURL(perform: handleIncomingURL)
             .fullScreenCover(item: $importedPortalSession) { session in
                 NavigationStack {
                     SessionView(
@@ -218,8 +219,21 @@ struct ContentView: View {
             self.scannedPortalCode = nil
         }
 
-        guard let portalImport = PortalSessionImport.parse(from: scannedPortalCode) else {
-            portalImportError = "That barcode is not a WelcomTalk Portal start code."
+        importPortalSession(from: scannedPortalCode)
+    }
+
+    private func handleIncomingURL(_ url: URL) {
+        importPortalSession(from: url.absoluteString)
+    }
+
+    private func importPortalSession(from code: String) {
+        showingCreateSession = false
+        showingJoinSession = false
+        showingPortalScanner = false
+        showingMessagingSettings = false
+
+        guard let portalImport = PortalSessionImport.parse(from: code) else {
+            portalImportError = "That link or barcode is not a WelcomTalk Portal start code."
             return
         }
 
