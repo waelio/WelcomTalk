@@ -32,6 +32,7 @@ struct CreateSessionView: View {
     @State private var createdSession: Session?
     @State private var hasAppliedInitialPortalImport = false
     @State private var hasAutoStartedImportedSession = false
+    @State private var hasVisiblePortalImport = false
     @FocusState private var focusedField: Field?
 
     init(initialPortalImport: PortalSessionImport? = nil, autoStartOnAppear: Bool = false) {
@@ -75,6 +76,12 @@ struct CreateSessionView: View {
                         Text("2 minutes").tag(TimeInterval(120))
                         Text("3 minutes").tag(TimeInterval(180))
                         Text("5 minutes").tag(TimeInterval(300))
+                    }
+
+                    if hasVisiblePortalImport {
+                        Text("Portal barcode imported. Review the prefilled form, then tap Start Fair Conversation.")
+                            .font(.caption)
+                            .foregroundColor(.green)
                     }
                 }
 
@@ -176,7 +183,7 @@ struct CreateSessionView: View {
                     Button(action: createSession) {
                         HStack {
                             Spacer()
-                            Text("Start Fair Conversation")
+                            Text(hasVisiblePortalImport ? "Start Imported Session" : "Start Fair Conversation")
                                 .bold()
                             Spacer()
                         }
@@ -277,6 +284,7 @@ struct CreateSessionView: View {
     private func applyPortalImport(_ portalImport: PortalSessionImport, autoStart: Bool) {
         portalImportError = nil
         isImportingPortalRequest = false
+        hasVisiblePortalImport = true
 
         sessionTitle = trimmed(portalImport.topic)
         userName = trimmed(portalImport.fullName)
@@ -322,7 +330,7 @@ struct CreateSessionView: View {
                 let resolvedPortalImport = try await portalImport.resolvePortalImport()
 
                 await MainActor.run {
-                    applyPortalImport(resolvedPortalImport, autoStart: true)
+                    applyPortalImport(resolvedPortalImport, autoStart: false)
                 }
             } catch {
                 await MainActor.run {

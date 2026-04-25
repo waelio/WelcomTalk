@@ -203,7 +203,7 @@ struct ContentView: View {
             .fullScreenCover(item: $importedPortalDraft) { portalImport in
                 CreateSessionView(
                     initialPortalImport: portalImport,
-                    autoStartOnAppear: true
+                    autoStartOnAppear: false
                 )
             }
         }
