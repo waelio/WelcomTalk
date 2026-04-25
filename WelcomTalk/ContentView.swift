@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var showingPortalScanner = false
     @State private var showingMessagingSettings = false
     @State private var scannedPortalCode: String?
-    @State private var importedPortalDraft: PortalSessionImport?
+    @State private var importedPortalDraft: PortalImportPresentation?
     @State private var portalImportError: String?
     @State private var isImportingPortalSession = false
 
@@ -202,9 +202,10 @@ struct ContentView: View {
             .onOpenURL(perform: handleIncomingURL)
             .fullScreenCover(item: $importedPortalDraft) { portalImport in
                 CreateSessionView(
-                    initialPortalImport: portalImport,
+                    initialPortalImport: portalImport.portalImport,
                     autoStartOnAppear: false
                 )
+                .id(portalImport.id)
             }
         }
     }
@@ -246,7 +247,7 @@ struct ContentView: View {
                 let resolvedPortalImport = try await portalImport.resolvePortalImport()
 
                 await MainActor.run {
-                    importedPortalDraft = resolvedPortalImport
+                    importedPortalDraft = PortalImportPresentation(portalImport: resolvedPortalImport)
                     isImportingPortalSession = false
                 }
             } catch {
@@ -257,6 +258,11 @@ struct ContentView: View {
             }
         }
     }
+}
+
+struct PortalImportPresentation: Identifiable {
+    let id = UUID().uuidString
+    let portalImport: PortalSessionImport
 }
 
 struct PortalSessionImport: Identifiable {

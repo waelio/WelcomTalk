@@ -14,7 +14,7 @@ struct JoinSessionView: View {
     @State private var isJoining = false
     @State private var errorMessage: String?
     @State private var joinedSession: Session?
-    @State private var importedPortalDraft: PortalSessionImport?
+    @State private var importedPortalDraft: PortalImportPresentation?
     @State private var showingQRScanner = false
     @State private var scannedCode: String?
     @FocusState private var focusedField: Field?
@@ -216,9 +216,10 @@ struct JoinSessionView: View {
             }
             .fullScreenCover(item: $importedPortalDraft) { portalImport in
                 CreateSessionView(
-                    initialPortalImport: portalImport,
+                    initialPortalImport: portalImport.portalImport,
                     autoStartOnAppear: false
                 )
+                .id(portalImport.id)
             }
         }
     }
@@ -372,7 +373,7 @@ struct JoinSessionView: View {
                 let resolvedPortalImport = try await portalImport.resolvePortalImport()
 
                 await MainActor.run {
-                    importedPortalDraft = resolvedPortalImport
+                    importedPortalDraft = PortalImportPresentation(portalImport: resolvedPortalImport)
                     isJoining = false
                 }
             } catch {
