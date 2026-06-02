@@ -8,7 +8,7 @@ import EventKit
 /// The **guest** mirrors state by observing those broadcasts. Either party can pause, extend the
 /// grace period, or propose a next meeting — clock changes are applied by the host; guests send
 /// typed commands that the host receives and acts on.
-class SessionViewModel: ObservableObject {
+class SessionViewModel: ObservableObject, DebateSessionProtocol {
     @Published var session: Session?
     @Published var timeRemaining: TimeInterval = 120
     @Published var currentNote: String = ""
@@ -117,6 +117,10 @@ class SessionViewModel: ObservableObject {
     func startTimer() {
         guard isHost else { return }
         startGracePeriod()
+    }
+
+    func startSession() {
+        startTimer()
     }
 
     // MARK: - Grace Period

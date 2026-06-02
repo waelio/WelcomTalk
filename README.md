@@ -198,6 +198,17 @@ WelcomTalk includes WebSocket client code to integrate with the `waelio-messagin
 
 **Currently:** App works standalone with QR codes. WebSocket integration is implemented but optional.
 
+## Future global debate protocol direction
+
+The current product is a two-party structured conversation engine, but the architecture is intentionally aligned with a broader debate protocol vision:
+
+- structured turn-taking and neutral sequencing
+- support for a speaker queue and moderator roles
+- scalable sync with room IDs and global participation
+- topic metadata, rounds, and debate scoring
+
+This repo is positioned to evolve from a private conversation tool into a wider debate protocol.
+
 ## NFC Requirements
 
 **Hardware:**

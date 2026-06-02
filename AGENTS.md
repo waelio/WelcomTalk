@@ -56,6 +56,8 @@ This repo is a SwiftUI iOS app with MVVM + Combine and a pure Swift shared libra
   - Simulator: `ws://localhost:8080`
   - Device: `wss://waelio-messaging.onrender.com`
 - `WelcomShared` should remain import-safe for cross-platform use
+- This project is evolving toward a broader debate protocol abstraction, so prefer small
+  session/service abstractions over large UI rewrites.
 - `fastlane capture` depends on `/tmp/take_screenshots.sh` (not committed)
 
 ## References
